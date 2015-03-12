@@ -1,0 +1,22 @@
+body {
+    background-color: #000000;
+    color: #CCCCCC;
+}
+
+.top {
+    padding: 10px !important;
+    background-color: #333333;
+}
+
+.pieces {
+    padding: 10px !important;
+    background-color: #000000;
+}
+
+.board {
+    padding: 10px !important;
+    min-height: 100%;
+    height: auto;
+    background-color: #444444;
+}
+
