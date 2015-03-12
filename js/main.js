@@ -1,5 +1,5 @@
 var sham = angular.module('Shamblokus', ['ui']);
-var squareSize = 20;
+var squareSize = 22;
 var boardXoff = Math.floor(500/squareSize)*squareSize;
 var boardYoff = 0;
 var p1, s;
@@ -17,40 +17,52 @@ sham.controller('Main', function($scope) {
     x = 0;
     y = 0;
     var maxH = 1;
-    var shapeOff = 0;
-    for(b = 0; b < p1.bag.length; b++){
+    board.piece.xOff = boardXoff;
+    board.piece.yOff = boardYoff;
+    board.piece.id = 4;
+    board.piece.squareSize = squareSize;
+    board.piece.canBeMoved = false;
+    var pieceOff = 0;
+    var p;
+    for(var b = 0; b < p1.bag.length; b++){
         cColor = colors[p1.bag[b].id];
         if(b>0) //new bag, new line
         {
             x = 0;
             maxH = 1;
             y += maxH * squareSize + piecesDist;
-            shapeOff = s.shapes.length;
+            pieceOff = p;
         }
         for(p = 0; p < p1.bag[b].pieces.length; p++)
         {
-            if(x + (p1.bag[b].pieces[p].w)*squareSize + piecesDist> boardXoff)  //new line
+            var cPiece = p1.bag[b].pieces[p];
+            if(x + (cPiece.w)*squareSize + piecesDist> boardXoff)  //new line
             {
                 x = 0;
                 maxH = 1;
                 y += maxH*squareSize + piecesDist;
-                shapeOff = s.shapes.length;
+                pieceOff = p;
             }
-            if(p1.bag[b].pieces[p].h > maxH)
+            if(cPiece.h > maxH)
             {
-                hDif = p1.bag[b].pieces[p].h - maxH;
-                console.log(maxH, p1.bag[b].pieces[p].h, p, y, y + hDif * squareSize, shapeOff, s.shapes.length);
+                hDif = cPiece.h - maxH;
                 y += hDif * squareSize;
-                for(var i = shapeOff; i <s.shapes.length; i++){
-                    s.shapes[i].y = y;
+                for(var i = pieceOff; i < p - 1; i++){
+                    console.log(p, i, b);
+                    p1.bag[b].pieces[i].yOff = y;
                 }
                 maxH += hDif;
             }
-            s.addShape(new Shape(p1.bag[b].pieces[p], x, y, cColor, squareSize, true));
-            x += (p1.bag[b].pieces[p].w)*squareSize + piecesDist;
+            cPiece.xOff = x;
+            cPiece.yOff = y;
+          
+            //s.addShape(new Shape(p1.bag[b].pieces[p], x, y, cColor, squareSize, true));
+            x += (cPiece.w)*squareSize + piecesDist;
         }
     }
-    s.addShape(new Shape(board.piece, boardXoff, boardYoff, colors[4], squareSize, false));
 
 });
+
+
+
 
