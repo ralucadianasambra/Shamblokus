@@ -54,9 +54,9 @@ Piece.prototype.contains = function(mx, my) {
 }
 
 
-function CanvasState(canvas) {
+function CanvasState(canvas, activePlayer) {
   // **** First some setup! ****
-  
+  this.activePlayer = activePlayer;
   this.canvas = canvas;
   this.width = canvas.width = window.innerWidth;
   this.height = canvas.height = window.innerHeight;
@@ -104,20 +104,20 @@ function CanvasState(canvas) {
     var mouse = myState.getMouse(e);
     var mx = mouse.x;
     var my = mouse.y;
-    for(b = 0; b < p1.bag.length; b++){
-      for(p = p1.bag[b].pieces.length - 1; p >= 0; p--){
-        var cPiece = p1.bag[b].pieces[p];
+    for(b = 0; b < myState.activePlayer.bag.length; b++){
+      for(p = myState.activePlayer.bag[b].pieces.length - 1; p >= 0; p--){
+        var cPiece = myState.activePlayer.bag[b].pieces[p];
         if(cPiece.contains(mx, my) && cPiece.available){
           myState.dragoffx = mx - cPiece.xOff;
           myState.dragoffy = my - cPiece.yOff;
           myState.dragging = true;
-		  p1.bag[b].pieces.splice(p, 1);
+		  myState.activePlayer.bag[b].pieces.splice(p, 1);
 		  cPiece.active = true;
-		  p1.bag[b].pieces.push(cPiece);		//bring to front
+		  myState.activePlayer.bag[b].pieces.push(cPiece);		//bring to front
           myState.selection = cPiece;
           myState.valid = false;
 		  for(p = p-1; p >= 0; p--)			//set inactive other pieces
-			p1.bag[b].pieces[p].active = false;
+			myState.activePlayer.bag[b].pieces[p].active = false;
           return;
         }
 		else
@@ -147,7 +147,6 @@ function CanvasState(canvas) {
   canvas.addEventListener('mouseup', function(e) {
       if(myState.selection){
           if(myState.selection.isPartlyOverTheBoard()){     //fit
-          //if(myState.selection.xOff >= boardXoff-myState.selection.w*squareSize){
               myState.selection.xOff = Math.floor(myState.selection.xOff/squareSize+0.5)*squareSize;
               myState.selection.yOff = Math.floor(myState.selection.yOff/squareSize+0.5)*squareSize;
               myState.valid = false;
@@ -159,7 +158,7 @@ function CanvasState(canvas) {
   }, true); //end of 'mouseup'
     
   canvas.addEventListener('dblclick', function(e) {
-		p1.rearrangePieces();
+		myState.activePlayer.rearrangePieces();
 		myState.valid = false;
 		myState.dragging = false;
   }, true); //end of 'mouseup'
@@ -200,7 +199,7 @@ function CanvasState(canvas) {
                     myState.selection.available = false;
                     myState.selection = null;
                     //TODO: delete piece from current bag
-                    p1.updateScore();
+                    _scope.p[idActivePlayer].updateScore();
                     myState.valid = false;
                 }
 			}
@@ -232,9 +231,9 @@ CanvasState.prototype.draw = function() {
     
     // draw all shapes
     board.draw(ctx);  
-    for(b = 0; b < p1.bag.length; b++){
-      for(p = 0; p < p1.bag[b].pieces.length; p++){
-        var cPiece = p1.bag[b].pieces[p];
+    for(b = 0; b < this.activePlayer.bag.length; b++){
+      for(p = 0; p < this.activePlayer.bag[b].pieces.length; p++){
+        var cPiece = this.activePlayer.bag[b].pieces[p];
         //TODO: skip if out       if (shape.x > this.width || shape.y > this.height || shape.x + shape.w < 0 || shape.y + shape.h < 0) continue;
         cPiece.draw(ctx);
       }

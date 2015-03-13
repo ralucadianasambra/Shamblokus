@@ -72,6 +72,7 @@ function Player(ids){
             }
         }
     }
+    this.updateScore();
 }
 
 //computes the size (in number of rows/lines) of a piece
@@ -122,12 +123,11 @@ Piece.prototype.rotate = function(){
 }
 
 Player.prototype.rearrangePieces = function(){
-    var p1 = this;
 	x = 0;
     y = 0;
     var maxH = 1;
     var pieceOff = 0;
-    for(var b = 0; b < p1.bag.length; b++){
+    for(var b = 0; b < this.bag.length; b++){
         if(b>0) //new bag, new line
         {
             x = 0;
@@ -135,9 +135,9 @@ Player.prototype.rearrangePieces = function(){
             y += maxH * squareSize + piecesDist;
             pieceOff = p;
         }
-        for(var p = 0; p < p1.bag[b].pieces.length; p++)
+        for(var p = 0; p < this.bag[b].pieces.length; p++)
         {
-            var cPiece = p1.bag[b].pieces[p];
+            var cPiece = this.bag[b].pieces[p];
 			if(cPiece.available == false)
 				continue;		//skip
             if(x + (cPiece.w)*squareSize + piecesDist > boardXoff)  //new line
@@ -152,7 +152,7 @@ Player.prototype.rearrangePieces = function(){
                 hDif = cPiece.h - maxH;					//current piece is taller then any other piece on the line ==> shift them down
                 y += hDif * squareSize;
                 for(var i = pieceOff; i < p - 1; i++){
-                    p1.bag[b].pieces[i].yOff = y;
+                    this.bag[b].pieces[i].yOff = y;
                 }
                 maxH = cPiece.h;			//update maxH to the height of the current piece
             }
