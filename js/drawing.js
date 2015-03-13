@@ -3,19 +3,30 @@
 Piece.prototype.draw = function(ctx) {
     ctx.strokeStyle = "#444444";
     ctx.lineWidth = 1;
-    for(var i = 0; i < this.shape.length; i++){
-        for(var j = 0; j < this.shape[i].length; j++){
-            if(this.shape[i][j]==1){ 
-                ctx.strokeRect(this.xOff + j*this.squareSize, this.yOff + i*this.squareSize, this.squareSize, this.squareSize);
-                var grd = ctx.createRadialGradient(
-                    this.xOff + (j+0.5)*this.squareSize, this.yOff + (i+0.5)*this.squareSize, this.squareSize/7, 
-                    this.xOff + (j+0.5)*this.squareSize, this.yOff + (i+0.5)*this.squareSize, this.squareSize/2);
-                grd.addColorStop(0, this.color1);
-                grd.addColorStop(1, this.color2);
-                ctx.fillStyle = grd;
-                ctx.fillRect(this.xOff + j*this.squareSize, this.yOff + i*this.squareSize, this.squareSize, this.squareSize);
-            }
+    var c1, c2;
+	for(var sq = 0; sq < this.squares.length; sq++){
+		var i = this.squares[sq][0];
+		var j= this.squares[sq][1];
+		ctx.strokeRect(this.xOff + j*squareSize, this.yOff + i*squareSize, squareSize, squareSize);
+		var grd = ctx.createRadialGradient(
+			this.xOff + (j+0.5)*squareSize, this.yOff + (i+0.5)*squareSize, squareSize/7, 
+			this.xOff + (j+0.5)*squareSize, this.yOff + (i+0.5)*squareSize, squareSize/2);
+        if(this.squares[sq].length == 3){
+            id = this.squares[sq][2];
+            c1 = colors[id][0];
+            c2 = colors[id][1];
         }
+        else{
+            c1 = this.color1;
+            c2 = this.color2;
+        }
+        if(this.active)
+            grd.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+        else
+            grd.addColorStop(0, c1);
+        grd.addColorStop(1, c2);
+        ctx.fillStyle = grd;
+        ctx.fillRect(this.xOff + j*squareSize, this.yOff + i*squareSize, squareSize, squareSize);
     }
 }
 
@@ -24,9 +35,22 @@ Piece.prototype.draw = function(ctx) {
 Piece.prototype.contains = function(mx, my) {
     // All we have to do is make sure the Mouse X,Y fall in the area between
     // the shape's X and (X + Width) and its Y and (Y + Height)
-    //TODO: sa fie musai pe un patratel!!
-    return  (this.xOff <= mx) && (this.xOff + this.w*this.squareSize >= mx) &&
-            (this.yOff <= my) && (this.yOff + this.h*this.squareSize >= my);
+	test = false;
+	var i, j, xmin, xmax, ymin, ymax;
+	for(var sq = 0; sq < this.squares.length; sq++){
+		i = this.squares[sq][0];
+		j = this.squares[sq][1];
+		xmin = this.xOff + j * squareSize;
+		xmax = this.xOff + (j+1) * squareSize;
+		ymin = this.yOff + i * squareSize;
+		ymax = this.yOff + (i+1) * squareSize;
+		if(mx >= xmin && mx < xmax && my >= ymin && my < ymax){
+			test = true;
+			break;
+		}
+	} 
+	
+    return  test;
 }
 
 
@@ -81,16 +105,23 @@ function CanvasState(canvas) {
     var mx = mouse.x;
     var my = mouse.y;
     for(b = 0; b < p1.bag.length; b++){
-      for(p = 0; p < p1.bag[b].pieces.length; p++){
+      for(p = p1.bag[b].pieces.length - 1; p >= 0; p--){
         var cPiece = p1.bag[b].pieces[p];
-        if(cPiece.contains(mx, my) && cPiece.canBeMoved){
+        if(cPiece.contains(mx, my) && cPiece.available){
           myState.dragoffx = mx - cPiece.xOff;
           myState.dragoffy = my - cPiece.yOff;
           myState.dragging = true;
+		  p1.bag[b].pieces.splice(p, 1);
+		  cPiece.active = true;
+		  p1.bag[b].pieces.push(cPiece);		//bring to front
           myState.selection = cPiece;
           myState.valid = false;
+		  for(p = p-1; p >= 0; p--)			//set inactive other pieces
+			p1.bag[b].pieces[p].active = false;
           return;
         }
+		else
+			cPiece.active = false;
       }
     }
 
@@ -101,6 +132,7 @@ function CanvasState(canvas) {
       myState.valid = false; // Need to clear the old selection border
     }
   }, true);     //end of 'mousedown'
+  
   canvas.addEventListener('mousemove', function(e) {
     if (myState.dragging){
       var mouse = myState.getMouse(e);
@@ -109,27 +141,72 @@ function CanvasState(canvas) {
       myState.selection.xOff = mouse.x - myState.dragoffx;
       myState.selection.yOff = mouse.y - myState.dragoffy;   
       myState.valid = false; // Something's dragging so we must redraw
-      myState.selection.active = true;
     }
   }, true);     //end of 'mousemove'
+  
   canvas.addEventListener('mouseup', function(e) {
       if(myState.selection){
-          if(myState.selection.xOff >= boardXoff-myState.selection.w*myState.selection.squareSize){
-              myState.selection.xOff = Math.floor(myState.selection.xOff/myState.selection.squareSize+0.5)*myState.selection.squareSize;
-              myState.selection.yOff = Math.floor(myState.selection.yOff/myState.selection.squareSize+0.5)*myState.selection.squareSize;
+          if(myState.selection.isPartlyOverTheBoard()){     //fit
+          //if(myState.selection.xOff >= boardXoff-myState.selection.w*squareSize){
+              myState.selection.xOff = Math.floor(myState.selection.xOff/squareSize+0.5)*squareSize;
+              myState.selection.yOff = Math.floor(myState.selection.yOff/squareSize+0.5)*squareSize;
               myState.valid = false;
-              myState.selection.active = false;     //not active anymore
-              //myState.selection.canBeMoved = false;
+              //myState.selection.active = false;     //not active anymore
+              //myState.selection.available = false;
           }
       }
       myState.dragging = false;
   }, true); //end of 'mouseup'
     
-  // double click for making new shapes
-  //canvas.addEventListener('dblclick', function(e) {
-    //var mouse = myState.getMouse(e);
-    //myState.addShape(new Shape(mouse.x - 10, mouse.y - 10, 20, 20, 'rgba(0,255,0,.6)'));
-  //}, true);
+  canvas.addEventListener('dblclick', function(e) {
+		p1.rearrangePieces();
+		myState.valid = false;
+		myState.dragging = false;
+  }, true); //end of 'mouseup'
+	
+  
+    window.onkeydown = function(e) {
+		var c = e.keyCode;
+		if(c === 82){		//r - rotate
+			if(myState.selection){
+				myState.selection.rotate();
+				myState.valid = false;
+			}
+		}
+		else if(c === 86){	//v - vertical flip
+			if(myState.selection){
+				myState.selection.flipV();
+				myState.valid = false;
+			}
+		}
+		else if(c === 72){	//h - horizontal flip
+			if(myState.selection){
+				myState.selection.flipH();
+				myState.valid = false;
+			}
+		}
+        else if(c === 13){	//enter - enter
+			if(myState.selection){
+                //test if can fit in that place
+                if(myState.selection.canBePlaced()){              
+                    
+                    //change id on the board
+                    for(sq = 0; sq < myState.selection.squares.length; sq++){
+                        i = (myState.selection.yOff - board.yOff)/squareSize + myState.selection.squares[sq][0];
+                        j = (myState.selection.xOff - board.xOff)/squareSize + myState.selection.squares[sq][1];
+                        board.squares[i*boardSize + j][2] = myState.selection.id;
+                    }
+                    myState.selection.active = false;
+                    myState.selection.available = false;
+                    myState.selection = null;
+                    //TODO: delete piece from current bag
+                    p1.updateScore();
+                    myState.valid = false;
+                }
+			}
+		}
+        
+	}; //end of 'onkeydown'
   
   // **** Options! ****
   
@@ -137,11 +214,6 @@ function CanvasState(canvas) {
   this.selectionWidth = 2;  
   this.interval = 30;
   setInterval(function() { myState.draw(); }, myState.interval);
-}
-
-CanvasState.prototype.addShape = function(shape) {
-  this.shapes.push(shape);
-  this.valid = false;
 }
 
 CanvasState.prototype.clear = function() {
@@ -159,7 +231,7 @@ CanvasState.prototype.draw = function() {
     // ** Add stuff you want drawn in the background all the time here **
     
     // draw all shapes
-    board.piece.draw(ctx);  
+    board.draw(ctx);  
     for(b = 0; b < p1.bag.length; b++){
       for(p = 0; p < p1.bag[b].pieces.length; p++){
         var cPiece = p1.bag[b].pieces[p];
