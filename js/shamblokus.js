@@ -8,48 +8,49 @@ var colors = [['rgba(220, 0, 0, 0.99)', 'rgba(128, 0, 0, 0.99)', 'rgba(255, 100,
               ['rgba(200, 200, 200, 0.99)', 'rgba(220, 220, 220, 0.99)', 'rgba(200, 200, 200, 0.99)']];        //white
               //['rgba(170, 170, 170, 0.99)', 'rgba(200, 200, 200, 0.99)', 'rgba(200, 200, 200, 0.99)']];        //white
 
-function Piece(id, coords){
-    this.id = id;
+function Piece(colorId, coords){
+    this.colorId = colorId;
     this.w = 0;         //number of columns
     this.h = 0;         //number of rows 
     this.xOff = 0;      //position of the top left corner, in pixels
     this.yOff = 0;
-	this.available = true;
-    this.active = false;        //selected piece
+	this.available = true;       //wasn't already used 
+    this.active = false;         //selected piece
     this.squares = coords;
 	
-    this.color1 = colors[id][0];
-    this.color2 = colors[id][1];
-    this.color3 = colors[id][2];
+    this.color1 = colors[colorId][0];
+    this.color2 = colors[colorId][1];
+    this.color3 = colors[colorId][2];
 
     this.setWH();
 }
 
-function Bag(id)
+function Bag(colorId)
 {
-    this.id = id;
+    this.colorId = colorId;
+    this.available = false;
     this.pieces = [];
-    this.pieces.push(new Piece(id, [[0, 0], [1, 0], [1, 1], [1, 2], [2, 1]]));
-    this.pieces.push(new Piece(id, [[1, 0], [1, 2], [2, 0], [2, 1], [2, 2]]));
-    this.pieces.push(new Piece(id, [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]]));
-    this.pieces.push(new Piece(id, [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]]));   
-    this.pieces.push(new Piece(id, [[0, 0], [1, 0], [1, 1], [2, 0], [2, 1]]));
-    this.pieces.push(new Piece(id, [[1, 0], [1, 1], [2, 0], [2, 1]]));
-    this.pieces.push(new Piece(id, [[0, 1], [1, 1], [2, 0], [2, 1], [2, 2]]));
-    this.pieces.push(new Piece(id, [[1, 1], [2, 0], [2, 1], [2, 2]]));
-    this.pieces.push(new Piece(id, [[1, 2], [2, 0], [2, 1], [2, 2], [2, 3]]));
-    this.pieces.push(new Piece(id, [[0, 1], [1, 0], [1, 1], [2, 0]]));
-    this.pieces.push(new Piece(id, [[1, 2], [1, 3], [2, 0], [2, 1], [2, 2]]));
-    this.pieces.push(new Piece(id, [[0, 0], [0, 1], [1, 1], [2, 1], [2, 2]]));
-    this.pieces.push(new Piece(id, [[1, 0], [2, 0], [2, 1], [2, 2], [2, 3]]));
-    this.pieces.push(new Piece(id, [[1, 0], [2, 0], [2, 1], [2, 2]]));
-    this.pieces.push(new Piece(id, [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]]));
-    this.pieces.push(new Piece(id, [[1, 0], [2, 0], [2, 1]]));
-    this.pieces.push(new Piece(id, [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]]));
-    this.pieces.push(new Piece(id, [[2, 0], [2, 1], [2, 2], [2, 3]]));
-    this.pieces.push(new Piece(id, [[2, 0], [2, 1], [2, 2]]));
-    this.pieces.push(new Piece(id, [[2, 0], [2, 1]]));
-    this.pieces.push(new Piece(id, [[2, 0]]));
+    this.pieces.push(new Piece(colorId, [[0, 0], [1, 0], [1, 1], [1, 2], [2, 1]]));
+    this.pieces.push(new Piece(colorId, [[1, 0], [1, 2], [2, 0], [2, 1], [2, 2]]));
+    this.pieces.push(new Piece(colorId, [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]]));
+    this.pieces.push(new Piece(colorId, [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]]));   
+    this.pieces.push(new Piece(colorId, [[0, 0], [1, 0], [1, 1], [2, 0], [2, 1]]));
+    this.pieces.push(new Piece(colorId, [[1, 0], [1, 1], [2, 0], [2, 1]]));
+    this.pieces.push(new Piece(colorId, [[0, 1], [1, 1], [2, 0], [2, 1], [2, 2]]));
+    this.pieces.push(new Piece(colorId, [[1, 1], [2, 0], [2, 1], [2, 2]]));
+    this.pieces.push(new Piece(colorId, [[1, 2], [2, 0], [2, 1], [2, 2], [2, 3]]));
+    this.pieces.push(new Piece(colorId, [[0, 1], [1, 0], [1, 1], [2, 0]]));
+    this.pieces.push(new Piece(colorId, [[1, 2], [1, 3], [2, 0], [2, 1], [2, 2]]));
+    this.pieces.push(new Piece(colorId, [[0, 0], [0, 1], [1, 1], [2, 1], [2, 2]]));
+    this.pieces.push(new Piece(colorId, [[1, 0], [2, 0], [2, 1], [2, 2], [2, 3]]));
+    this.pieces.push(new Piece(colorId, [[1, 0], [2, 0], [2, 1], [2, 2]]));
+    this.pieces.push(new Piece(colorId, [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]]));
+    this.pieces.push(new Piece(colorId, [[1, 0], [2, 0], [2, 1]]));
+    this.pieces.push(new Piece(colorId, [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]]));
+    this.pieces.push(new Piece(colorId, [[2, 0], [2, 1], [2, 2], [2, 3]]));
+    this.pieces.push(new Piece(colorId, [[2, 0], [2, 1], [2, 2]]));
+    this.pieces.push(new Piece(colorId, [[2, 0], [2, 1]]));
+    this.pieces.push(new Piece(colorId, [[2, 0]]));
 //    this.pieces.push(new Piece([[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]]));
 }
 
@@ -57,6 +58,7 @@ function Player(ids){
     this.score = 0;
     this.name = "";
     this.bag = [];
+    this.available = false;
     for(var i = 0; i < ids.length; i++){
         this.bag.push(new Bag(ids[i]));    
     }
@@ -72,6 +74,14 @@ function Player(ids){
     }
     this.updateScore();
 }
+
+Bag.prototype.setAvailability = function(available){
+    this.available = available;
+    for(p = 0; p < this.pieces.length; p++){
+        this.pieces[p].available = available;
+    }
+}
+
 
 //computes the size (in number of rows/lines) of a piece
 Piece.prototype.setWH = function(){
@@ -123,40 +133,39 @@ Piece.prototype.rotate = function(){
 Player.prototype.rearrangePieces = function(){
 	x = 0;
     y = 0;
-    var maxH = 1;
+    var maxH = 0;
     var pieceOff = 0;
     for(var b = 0; b < this.bag.length; b++){
         if(b>0) //new bag, new line
         {
             x = 0;
-            maxH = 1;
-            y += maxH * squareSize + piecesDist;
-            pieceOff = p;
+            y = Math.max(Math.floor(board.h/this.bag.length+0.49) * squareSize, y + maxH * squareSize + piecesDist);
+            pieceOff = 0;           //id of the first piece on the line
         }
         for(var p = 0; p < this.bag[b].pieces.length; p++)
         {
             var cPiece = this.bag[b].pieces[p];
 			if(cPiece.available == false)
 				continue;		//skip
-            if(x + (cPiece.w)*squareSize + piecesDist > boardXoff)  //new line
+            if(x + (cPiece.jmax) * squareSize + piecesDist > boardXoff)  //new line
             {
                 x = 0;
-				maxH = cPiece.h;						//update maxH to the height of the current piece
                 y += maxH*squareSize + piecesDist;		//use maxH of the previous line
+                maxH = cPiece.h;
                 pieceOff = p;
             }
             if(cPiece.h > maxH)
             {
                 hDif = cPiece.h - maxH;					//current piece is taller then any other piece on the line ==> shift them down
-                y += hDif * squareSize;
-                for(var i = pieceOff; i < p - 1; i++){
-                    this.bag[b].pieces[i].yOff = y;
+                for(var i = pieceOff; i < p; i++){
+                    if(this.bag[b].pieces[i].available)
+                        this.bag[b].pieces[i].yOff += hDif*squareSize;      //shift them down, so they are all on the same down-line
                 }
                 maxH = cPiece.h;			//update maxH to the height of the current piece
             }
-            cPiece.xOff = x;
-            cPiece.yOff = y;
-            x += (cPiece.w)*squareSize + piecesDist;
+            cPiece.xOff = x - cPiece.jmin * squareSize;
+            cPiece.yOff = y + (maxH - 1 - cPiece.imax) * squareSize;
+            x += (cPiece.w) * squareSize + piecesDist;
         }
     }
 }
@@ -208,7 +217,7 @@ Piece.prototype.canBePlaced = function(){
             if( xps == xbs && yps == ybs)
                 return false;
             
-            if(board.squares[bs][2] != this.id)       //skip cause not same color
+            if(board.squares[bs][2] != this.colorId)       //skip cause not same color
                 continue;
             
             //test for side condition (no share side with a square of the same color)
@@ -239,10 +248,10 @@ Piece.prototype.canBePlaced = function(){
                 this.xOff + (j+0.5)*squareSize, this.yOff + (i+0.5)*squareSize, squareSize/7, 
                 this.xOff + (j+0.5)*squareSize, this.yOff + (i+0.5)*squareSize, squareSize/2);
             if(this.squares[sq].length == 3){       //for board
-                id = this.squares[sq][2];
-                c1 = colors[id][0];
-                c2 = colors[id][1];
-                c3 = colors[id][2];
+                colorId = this.squares[sq][2];
+                c1 = colors[colorId][0];
+                c2 = colors[colorId][1];
+                c3 = colors[colorId][2];
             }
             else{
                 c1 = this.color1;

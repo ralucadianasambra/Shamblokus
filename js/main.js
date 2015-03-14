@@ -18,6 +18,7 @@ sham.controller('Main', function($scope) {
     $scope.p[1].name = "Andrei";
     $scope.activePlayerId = 0;
     $scope.activeBagId = 0;
+    $scope.p[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(true);
 
     //create the board as a huge piece
 	coords = [];
@@ -148,6 +149,8 @@ sham.controller('Main', function($scope) {
         var mx = mouse.x;
         var my = mouse.y;
         for(b = 0; b < myState.activePlayer.bag.length; b++){
+          if(!myState.activePlayer.bag[b].available)
+              continue;     //skip this bag 
           for(p = myState.activePlayer.bag[b].pieces.length - 1; p >= 0; p--){
             var cPiece = myState.activePlayer.bag[b].pieces[p];
             if(cPiece.contains(mx, my) && cPiece.available){
@@ -236,16 +239,20 @@ sham.controller('Main', function($scope) {
                         for(sq = 0; sq < myState.selection.squares.length; sq++){
                             i = (myState.selection.yOff - board.yOff)/squareSize + myState.selection.squares[sq][0];
                             j = (myState.selection.xOff - board.xOff)/squareSize + myState.selection.squares[sq][1];
-                            board.squares[i*boardSize + j][2] = myState.selection.id;
+                            board.squares[i*boardSize + j][2] = myState.selection.colorId;
                         }
                         myState.selection.active = false;
                         myState.selection.available = false;
                         myState.selection = null;
-                        //TODO: delete piece from current bag
+                        pieces = $scope.p[$scope.activePlayerId].bag[$scope.activeBagId].pieces;
+                        pieces.splice(pieces.length-1, 1);      //delete last piece
+                        $scope.p[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(false);
+                        $scope.activeBagId = ($scope.activeBagId+1)% $scope.p[$scope.activePlayerId].bag.length;
+                        $scope.p[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(true);
                         $scope.p[$scope.activePlayerId].updateScore();
                         $scope.$apply();
-                        console.log($scope.p[$scope.activePlayerId]);
-                        myState.valid = false;
+                        //$scope.p[$scope.activePlayerId].rearrangePieces();        //TODO: de vazut dc aplic sau nu :)
+                        myState.valid = false;      //continue drawing cause there was a modification
                     }
                 }
             }
@@ -273,7 +280,6 @@ sham.controller('Main', function($scope) {
     //TODO: nu merge!
     $scope.player0 = $scope.p[0];
     $scope.$watch('player0.score', function (newVal, oldVal){
-        console.log(newVal, oldVal);
         if(newVal != undefined){
             $scope.p[0].score = newVal;
         }
