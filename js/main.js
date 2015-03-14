@@ -257,9 +257,7 @@ sham.controller('Main', function($scope) {
       this.selectionColor = '#CC0000';
       this.selectionWidth = 2;  
       this.interval = 30;
-      setInterval(function() {
-          myState.draw(); },
-                  myState.interval);
+      setInterval(function() { myState.draw(); }, myState.interval);
     }
 
 
@@ -267,11 +265,9 @@ sham.controller('Main', function($scope) {
 
 
 
-
     
     
-    
-      $scope.CanvasState(document.getElementById('bag1'), $scope.p[$scope.activePlayerId]);
+    $scope.CanvasState(document.getElementById('bag1'), $scope.p[$scope.activePlayerId]);
     $scope.p[$scope.activePlayerId].rearrangePieces();
 
     //TODO: nu merge!

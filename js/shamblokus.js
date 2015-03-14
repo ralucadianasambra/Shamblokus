@@ -1,15 +1,12 @@
-//var colors = [[255, 0, 0, 128, 0, 0],               //red
-//              [0, 90, 160, 0, 0, 255],              //blue
-//              [255, 255, 0, 180, 180, 0],           //yellow
-//              [0, 200, 0, 0, 100, 0],               //green
-//              //[200, 200, 200, 170, 170, 170]];      //white
-//              [170, 170, 170, 200, 200, 200]];      //white
-              
-var colors = [['rgba(255, 0, 0, 0.7)', 'rgba(128, 0, 0, 0.7)'],                 //red
-              ['rgba(0, 90, 160, 0.7)', 'rgba(0, 0, 255, 0.7)'],                //blue
-              ['rgba(255, 255, 0, 0.7)', 'rgba(180, 180, 0, 0.7)'],               //yellow
-              ['rgba(0, 200, 0, 0.7)', 'rgba(0, 100, 0, 0.7)'],                 //green
-              ['rgba(170, 170, 170, 0.7)', 'rgba(200, 200, 200, 0.7)']];        //white
+var colors = [['rgba(220, 0, 0, 0.99)', 'rgba(128, 0, 0, 0.99)', 'rgba(255, 100, 100, 0.99)'],                 //red
+              //['rgba(60, 80, 255, 0.99)', 'rgba(40, 60, 180, 0.99)', 'rgba(140, 200, 255, 0.99)'],                //blue
+              ['rgba(50, 50, 235, 0.99)', 'rgba(20, 20, 180, 0.99)', 'rgba(120, 120, 255, 0.99)'],                //blue
+              //['rgba(140, 65, 220, 0.99)', 'rgba(100, 30, 180, 0.99)', 'rgba(200, 160, 245, 0.99)'],                //blue
+              //['rgba(255, 180, 0, 0.99)', 'rgba(220, 165, 0, 0.99)', 'rgba(255, 215, 120, 0.99)'],                //blue
+              ['rgba(255, 245, 100, 0.99)', 'rgba(240, 220, 0, 0.99)', 'rgba(255, 255, 230, 0.99)'],               //yellow
+              ['rgba(0, 150, 0, 0.99)', 'rgba(0, 100, 0, 0.99)', 'rgba(80, 220, 80, 0.99)'],                 //green
+              ['rgba(200, 200, 200, 0.99)', 'rgba(220, 220, 220, 0.99)', 'rgba(200, 200, 200, 0.99)']];        //white
+              //['rgba(170, 170, 170, 0.99)', 'rgba(200, 200, 200, 0.99)', 'rgba(200, 200, 200, 0.99)']];        //white
 
 function Piece(id, coords){
     this.id = id;
@@ -23,6 +20,7 @@ function Piece(id, coords){
 	
     this.color1 = colors[id][0];
     this.color2 = colors[id][1];
+    this.color3 = colors[id][2];
 
     this.setWH();
 }
@@ -232,7 +230,7 @@ Piece.prototype.canBePlaced = function(){
     Piece.prototype.draw = function(ctx) {
         ctx.strokeStyle = "#444444";
         ctx.lineWidth = 1;
-        var c1, c2;
+        var c1, c2, c3;
         for(var sq = 0; sq < this.squares.length; sq++){
             var i = this.squares[sq][0];
             var j= this.squares[sq][1];
@@ -240,20 +238,25 @@ Piece.prototype.canBePlaced = function(){
             var grd = ctx.createRadialGradient(
                 this.xOff + (j+0.5)*squareSize, this.yOff + (i+0.5)*squareSize, squareSize/7, 
                 this.xOff + (j+0.5)*squareSize, this.yOff + (i+0.5)*squareSize, squareSize/2);
-            if(this.squares[sq].length == 3){
+            if(this.squares[sq].length == 3){       //for board
                 id = this.squares[sq][2];
                 c1 = colors[id][0];
                 c2 = colors[id][1];
+                c3 = colors[id][2];
             }
             else{
                 c1 = this.color1;
                 c2 = this.color2;
+                c3 = this.color3;
             }
-            if(this.active)
-                grd.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
-            else
+            if(this.active){
+                grd.addColorStop(0, c3);
+                grd.addColorStop(1, c1);
+            }
+            else{
                 grd.addColorStop(0, c1);
-            grd.addColorStop(1, c2);
+                grd.addColorStop(1, c2);
+            }
             ctx.fillStyle = grd;
             ctx.fillRect(this.xOff + j*squareSize, this.yOff + i*squareSize, squareSize, squareSize);
         }
