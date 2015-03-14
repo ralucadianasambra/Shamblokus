@@ -238,7 +238,7 @@ Piece.prototype.canBePlaced = function(){
     // Draws this piece to a given context
     Piece.prototype.draw = function(ctx) {
         ctx.strokeStyle = "#444444";
-        ctx.lineWidth = 1;
+        //ctx.lineWidth = 0;
         var c1, c2, c3;
         for(var sq = 0; sq < this.squares.length; sq++){
             var i = this.squares[sq][0];
@@ -268,6 +268,7 @@ Piece.prototype.canBePlaced = function(){
             }
             ctx.fillStyle = grd;
             ctx.fillRect(this.xOff + j*squareSize, this.yOff + i*squareSize, squareSize, squareSize);
+            //ctx.strokeRect(this.xOff + j*squareSize + 1, this.yOff + i*squareSize + 1, squareSize, squareSize);
         }
     }
     
