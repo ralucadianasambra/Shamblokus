@@ -54,9 +54,10 @@ Piece.prototype.contains = function(mx, my) {
 }
 
 
-function CanvasState(canvas, activePlayer) {
+function CanvasState(canvas, players) {
   // **** First some setup! ****
-  this.activePlayer = activePlayer;
+  this.activePlayer = players[idActivePlayer];
+  this.players = players;
   this.canvas = canvas;
   this.width = canvas.width = window.innerWidth;
   this.height = canvas.height = window.innerHeight;
@@ -242,14 +243,6 @@ CanvasState.prototype.draw = function() {
       this.selection.draw(ctx);     //bring to front the selected piece
     }
 
-    // draw selection
-    // right now this is just a stroke along the edge of the selected Shape
-//    if (this.selection != null) {
-//        ctx.strokeStyle = this.selectionColor;
-//        ctx.lineWidth = this.selectionWidth;
-//        var mySel = this.selection;
-//        ctx.stroke(mySel.x,mySel.y,mySel.w,mySel.h);
-//    }
     
     // ** Add stuff you want drawn on top all the time here **
     

@@ -97,27 +97,27 @@ Piece.prototype.setWH = function(){
 Piece.prototype.flipH = function(){
 	if(!this.available)
 		return;
-	for(s = 0; s < this.squares.length; s++){
-		this.squares[s][1] = this.jmax - (this.squares[s][1] - this.jmin);
+	for(sq = 0; sq < this.squares.length; sq++){
+		this.squares[sq][1] = this.jmax - (this.squares[sq][1] - this.jmin);
 	}
 }
 
 Piece.prototype.flipV = function(){
 	if(!this.available)
 		return;
-	for(s = 0; s < this.squares.length; s++){
-		this.squares[s][0] = this.imax - (this.squares[s][0] - this.imin);
+	for(sq = 0; sq < this.squares.length; sq++){
+		this.squares[sq][0] = this.imax - (this.squares[sq][0] - this.imin);
 	}
 }
 
 Piece.prototype.rotate = function(){
 	if(!this.available)
 		return;
-	for(s = 0; s < this.squares.length; s++){
-		var i = this.squares[s][0];
-		var j = this.squares[s][1];
-		this.squares[s][1] = this.jmin + (this.imax - i);
-		this.squares[s][0] = this.imin + (j - this.jmin);
+	for(sq = 0; sq < this.squares.length; sq++){
+		var i = this.squares[sq][0];
+		var j = this.squares[sq][1];
+		this.squares[sq][1] = this.jmin + (this.imax - i);
+		this.squares[sq][0] = this.imin + (j - this.jmin);
 	}
 	this.setWH();
 }
@@ -226,3 +226,58 @@ Piece.prototype.canBePlaced = function(){
     }
     return cornerCdt;
 }
+
+
+    // Draws this piece to a given context
+    Piece.prototype.draw = function(ctx) {
+        ctx.strokeStyle = "#444444";
+        ctx.lineWidth = 1;
+        var c1, c2;
+        for(var sq = 0; sq < this.squares.length; sq++){
+            var i = this.squares[sq][0];
+            var j= this.squares[sq][1];
+            ctx.strokeRect(this.xOff + j*squareSize, this.yOff + i*squareSize, squareSize, squareSize);
+            var grd = ctx.createRadialGradient(
+                this.xOff + (j+0.5)*squareSize, this.yOff + (i+0.5)*squareSize, squareSize/7, 
+                this.xOff + (j+0.5)*squareSize, this.yOff + (i+0.5)*squareSize, squareSize/2);
+            if(this.squares[sq].length == 3){
+                id = this.squares[sq][2];
+                c1 = colors[id][0];
+                c2 = colors[id][1];
+            }
+            else{
+                c1 = this.color1;
+                c2 = this.color2;
+            }
+            if(this.active)
+                grd.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+            else
+                grd.addColorStop(0, c1);
+            grd.addColorStop(1, c2);
+            ctx.fillStyle = grd;
+            ctx.fillRect(this.xOff + j*squareSize, this.yOff + i*squareSize, squareSize, squareSize);
+        }
+    }
+    
+    
+    // Determine if a point is inside the shape's bounds
+    Piece.prototype.contains = function(mx, my) {
+        // All we have to do is make sure the Mouse X,Y fall in the area between
+        // the shape's X and (X + Width) and its Y and (Y + Height)
+        test = false;
+        var i, j, xmin, xmax, ymin, ymax;
+        for(var sq = 0; sq < this.squares.length; sq++){
+            i = this.squares[sq][0];
+            j = this.squares[sq][1];
+            xmin = this.xOff + j * squareSize;
+            xmax = this.xOff + (j+1) * squareSize;
+            ymin = this.yOff + i * squareSize;
+            ymax = this.yOff + (i+1) * squareSize;
+            if(mx >= xmin && mx < xmax && my >= ymin && my < ymax){
+                test = true;
+                break;
+            }
+        } 
+
+        return  test;
+    }
