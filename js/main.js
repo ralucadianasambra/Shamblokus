@@ -225,7 +225,21 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
   $scope.gameUpdated = function(uri) {
     console.log(uri);
 
+    // fetch the game state (and board) from the server
+    var g = $rdf.graph();
+    var f = $rdf.fetcher(g, TIMEOUT);
 
+    var docURI = webid.slice(0, webid.indexOf('#'));
+    var webidRes = $rdf.sym(webid);
+
+    f.nowOrWhenFetched(docURI,undefined,function(ok, body, xhr) {
+      if (!ok) {
+        console.log('Could not fetch game state: HTTP '+xhr.status);
+      } else {
+
+
+      }
+    });
   };
 
   // get relevant info for a webid
@@ -235,8 +249,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
     var g = $rdf.graph();
     var f = $rdf.fetcher(g, TIMEOUT);
-    // add CORS proxy
-    $rdf.Fetcher.crossSiteProxyTemplate=PROXY;
 
     var docURI = webid.slice(0, webid.indexOf('#'));
     var webidRes = $rdf.sym(webid);
