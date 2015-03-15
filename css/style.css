@@ -20,3 +20,23 @@ body {
     background-color: #444444;
 }
 
+.btn {
+    margin-bottom: 0px !important;
+}
+
+.mr-20 {
+    margin-right: 20px;
+}
+
+.mt-30 {
+    margin-top: 30px;
+}
+
+#selectplayers {
+    color: #000;
+    display: block;
+}
+
+.strikethrough {
+    text-decoration: line-through;
+}
