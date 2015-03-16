@@ -124,10 +124,22 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     $scope.boardReady = false;
   };
 
-  function connectToSocket(wss, uri) {
+  $scope.connectToSocket = function() {
+    var parser = document.createElement('a');
+    parser.href = $scope.gameURI;
+    parser.host; // => "example.com"
+    parser.port;     // => "3000"
+    parser.pathname; // => "/pathname/"
+
+    var wss = 'wss://'+parser.host;
+    if (parser.port.length > 0) {
+      wss += ':'+parser.port;
+    }
+    wss += parser.pathname;
+
     var socket = new WebSocket(wss);
     socket.onopen = function(){
-      this.send('sub ' + uri);
+      this.send('sub ' + $scope.gameURI);
     }
     socket.onmessage = function(msg){
       if (msg.data && msg.data.slice(0, 3) === 'pub') {
@@ -310,7 +322,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     var s = new $rdf.Serializer(g).toN3(g);
     $http({
       method: 'PUT',
-      url: $scope.userProfile.boardsURI+now,
+      url: $scope.userProfile.boardsURI+'game-'+now,
       withCredentials: true,
       headers: {
         'Content-Type': 'text/turtle',
@@ -397,23 +409,10 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     $scope.sendSPARQLPatch(uri, query).then(function(status) {
       if (status == 'success') {
         $scope.board = $scope.RecreateBoard(boardSize, boardXoff, boardYoff, []);
-        $scope.currentGame = uri;
+        $scope.gameURI = uri;
         $scope.$apply();
 
         $scope.waitForPlayers();
-
-        var parser = document.createElement('a');
-        parser.href = uri;
-        parser.host; // => "example.com"
-        parser.port;     // => "3000"
-        parser.pathname; // => "/pathname/"
-
-        var wss = 'wss://'+parser.host;
-        if (parser.port.length > 0) {
-          wss += ':'+parser.port;
-        }
-        wss += parser.pathname;
-        connectToSocket(wss, uri);
       }
     });
   };
@@ -447,12 +446,11 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
             var name = g.any(player.subject, SHAM("playerName")).value;
             var pid = g.any(player.subject, SHAM("playerId")).value;
             if (pid !== undefined) {
-              
               if (!$scope.players) {
                 $scope.players = [];
               }
               var colors = g.any(player.subject, SHAM("playerColors")).value.split(',');
-              $scope.players[pid] == new Player([]);
+              $scope.players[pid] = new Player([]);
               $scope.players[pid].colors = colors;
               $scope.players[pid].name = name;
               if (joined == '1') {
@@ -465,7 +463,8 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         // get board pieces
         var playedPieces = [];
         var pieces = g.statementsMatching(undefined, RDF("type"), SHAM("Piece"));
-        pieces.forEach(function(piece){
+        console.log(pieces);
+        pieces.forEach(function(piece) {
           var id = g.any(piece.subject, SHAM("colorId")).value;
           var sq = g.any(piece.subject, SHAM("squares")).value.split(',');
           playedPieces.push({
@@ -484,17 +483,13 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
             $scope.waitingForStart = false;
         }
 
-        if (started && started.value == '1') {
+        if (started) {
           $scope.gameStarted = true;
         }
         $scope.$apply();
       }
     });
   };
-
-  $scope.endTurn = function() {
-
-  }
 
   // save bags + pieces on the server for all players and init board
   $scope.waitForPlayers = function() {
@@ -504,9 +499,11 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     // create board
     $scope.initGame();
 
+    // start listening for updates
+    $scope.connectToSocket();
+
     $scope.$apply();
-    console.log("Waiting for other players...");
-    //$scope.startGame();
+    console.log("Waiting for other players...");    
   }
 
   $scope.joinGame = function () {
@@ -529,17 +526,35 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         $scope.waitForPlayers();
       }
     });
+  };
+
+  $scope.endTurn = function(lastPlayedPiece, lastPlayerId) {
+    // next player
+    var query = 'DELETE DATA { <'+$scope.gameURI+'> <'+SHAM("activePlayer").value+'> "'+ lastPlayerId +'" . } ;\n';
+    query += 'INSERT DATA { <'+$scope.gameURI+'> <'+SHAM("activePlayer").value+'> "'+ $scope.activePlayerId +'" . } ;\n';
+    // piece
+    var pieceID = '#'+Date.now();
+    query += 'INSERT DATA { <'+pieceID+'> <'+RDF('type').value+'> <'+SHAM("Piece").value+'> . } ;\n';
+    query += 'INSERT DATA { <'+pieceID+'> <'+SHAM('colorId').value+'> "'+lastPlayedPiece.colorId+'" . } ;\n';
+    query += 'INSERT DATA { <'+pieceID+'> <'+SHAM('squares').value+'> "'+lastPlayedPiece.squaresIds.toString()+'" . }';
+
+    //@@TODO end timer
+
+    $scope.sendSPARQLPatch($scope.gameURI, query);
   }
+
+
 
   // check if we came through link (this is ugly)
   $scope.state = $state;
   $scope.$watch('state.params', function(newVal, oldVal) {
-    if (newVal.game && newVal.pid && !$scope.myPlayer) {
+    if (newVal.game && newVal.pid && newVal.colors && !$scope.myPlayer) {
       $scope.personalizeUser = true;
       $scope.gameURI = unescape(decodeURIComponent(window.atob($state.params.game)));
       $scope.myId = $state.params.pid;
       $scope.myName = '';
       $scope.myPlayer = new Player($state.params.colors.split(','))
+
     }
   });
 
@@ -670,22 +685,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         return {x: mx, y: my};
       }
     
-    this.placePiece = function(){
-        //change id on the board
-        $scope.lastPlayedPiece = {colorId: myState.selection.colorId, squaresIds: []};
-        for(sq = 0; sq < myState.selection.squares.length; sq++){
-            i = (myState.selection.yOff - board.yOff)/squareSize + myState.selection.squares[sq][0];
-            j = (myState.selection.xOff - board.xOff)/squareSize + myState.selection.squares[sq][1];
-            board.squares[i*boardSize + j][2] = myState.selection.colorId;
-            $scope.lastPlayedPiece.squaresIds.push([i*boardSize + j]);
-        }
-        myState.selection.active = false;
-        myState.selection.available = false;
-        myState.selection = null;
-        pieces = $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].pieces;
-        pieces.splice(pieces.length-1, 1);      //delete last piece
-    }
-
     //fixes a problem where double clicking causes text to get selected on the canvas
     canvas.addEventListener('selectstart', function(e) { e.preventDefault(); return false; }, false);
 
@@ -777,17 +776,33 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
               }
           }
           else if(c === 13){	//enter - enter
-              if(myState.selection){
+              if(myState.selection && $scope.activePlayerId == $scope.myId){
                   //test if can fit in that place
                   if(myState.selection.canBePlaced()){              
-                        myState.placePiece();
-                        $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(false);
-                        $scope.activeBagId = ($scope.activeBagId+1)% $scope.players[$scope.activePlayerId].bag.length;
-                        $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(true);
-                        $scope.players[$scope.activePlayerId].updateScore();
+                        //change id on the board
+                        var lastPlayedPiece = {colorId: myState.selection.colorId, squaresIds: []};
+                        for(sq = 0; sq < myState.selection.squares.length; sq++){
+                            i = (myState.selection.yOff - board.yOff)/squareSize + myState.selection.squares[sq][0];
+                            j = (myState.selection.xOff - board.xOff)/squareSize + myState.selection.squares[sq][1];
+                            board.squares[i*boardSize + j][2] = myState.selection.colorId;
+                            lastPlayedPiece.squaresIds.push([i*boardSize + j]);
+                        }
+                        myState.selection.active = false;
+                        myState.selection.available = false;
+                        myState.selection = null;
+                        var pieces = $scope.myPlayer.bag[$scope.activeBagId].pieces;
+                        pieces.splice(pieces.length-1, 1);      //delete last piece
+                        $scope.myPlayer.bag[$scope.activeBagId].setAvailability(false);
+                        $scope.activeBagId = ($scope.activeBagId+1)% $scope.myPlayer.bag.length;
+                        $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
+                        $scope.myPlayer.updateScore();
+                        // set next player's turn
+                        var lastPlayerId = $scope.activePlayerId;
                         $scope.activePlayerId = ($scope.activePlayerId + 1) % $scope.players.length;
+                        // end turn
+                        $scope.endTurn(lastPlayedPiece, lastPlayerId);
                         $scope.$apply();
-                        //$scope.players[$scope.activePlayerId].rearrangePieces();        //TODO: de vazut dc aplic sau nu :)
+                        //$scope.myPlayer.rearrangePieces();        //TODO: de vazut dc aplic sau nu :)
                         myState.valid = false;      //continue drawing cause there was a modification
                   }
               }
@@ -796,7 +811,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       }; //end of 'onkeydown'
 
     // **** Options! ****
-
     this.selectionColor = '#CC0000';
     this.selectionWidth = 2;  
     this.interval = 30;
@@ -821,17 +835,22 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
   $scope.startGame = function() {
     $scope.gameStarted = true;
     $scope.boardReady = false;
+
+    // set gameStarted
+    var query = 'INSERT DATA { <'+$scope.gameURI+'> <'+SHAM("gameStarted").value+'> "'+ Date.now() +'" . }';
+    $scope.sendSPARQLPatch($scope.gameURI, query);
   }
   
   
   $scope.RecreateBoard = function(boardSize, boardXoff, boardYoff, playedPieces) {
-      board = createBoard(boardSize, boardXoff, boardYoff);
-      for(i = 0; playedPieces.length; i++){
-          for(j = 0; j < playedPieces[i].squaresIds.length; j++){
-              board.squares[playedPieces[i].squaresIds[j]][2] = playedPieces[i].colorId;
-          }
-      }
-      return board;
+    console.log(playedPieces);
+    board = createBoard(boardSize, boardXoff, boardYoff);
+    for(i = 0; i < playedPieces.length; i++){
+        for(j = 0; j < playedPieces[i].squaresIds.length; j++){
+            board.squares[playedPieces[i].squaresIds[j]][2] = playedPieces[i].colorId;
+        }
+    }
+    return board;
   }
 
   //for debugging
