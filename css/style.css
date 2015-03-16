@@ -22,6 +22,11 @@ body {
 
 .btn {
     margin-bottom: 0px !important;
+    background-color: dodgerblue !important;
+}
+
+.btn-large{
+    background-color: dodgerblue;
 }
 
 .mr-20 {
@@ -39,4 +44,12 @@ body {
 
 .strikethrough {
     text-decoration: line-through;
+}
+
+.right{
+    text-align: right;
+}
+
+.row {
+  margin-bottom: 5px;
 }

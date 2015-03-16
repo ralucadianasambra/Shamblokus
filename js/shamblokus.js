@@ -294,3 +294,26 @@ Piece.prototype.canBePlaced = function(){
 
         return  test;
     }
+    
+    
+    
+    createBoard = function(boardSize, boardXoff, boardYoff){
+        corners = [[-1, -1, 0], [boardSize, -1, 1], [boardSize, boardSize, 2], [-1, boardSize, 3]];
+
+        //create the board as a huge piece
+        coords = [];
+        for(var i = 0; i < boardSize; i++)
+        for(var j = 0; j < boardSize; j++){
+            coords.push([i, j, 4]);
+        }
+        for(var c = 0; c < corners.length; c++) {
+            coords.push(corners[c]);
+        }
+
+        board = new Piece(4, coords);
+        board.xOff = boardXoff;
+        board.yOff = boardYoff;   
+        board.canBeMoved = false;
+        boardXoff -= boardSize;
+        return board;
+    }

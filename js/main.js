@@ -472,24 +472,28 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
   ////// CANVAS CODE BEGINS HERE ///////
 
-  corners = [[-1, -1, 0], [boardSize, -1, 1], [boardSize, boardSize, 2], [-1, boardSize, 3]];
-
-  //create the board as a huge piece
-  coords = [];
-  for(var i = 0; i < boardSize; i++)
-  for(var j = 0; j < boardSize; j++){
-    coords.push([i, j, 4]);
-  }
-  for(var c = 0; c < corners.length; c++) {
-    coords.push(corners[c]);
-  }
-
-  board = new Piece(4, coords);
-  board.xOff = boardXoff;
-  board.yOff = boardYoff;   
-  board.canBeMoved = false;
-  boardXoff -= boardSize;
-
+//  var testCtx = document.getElementById('test').getContext('2d');
+//  cc = 0;
+//  x = 0;
+//  y = 0;
+//  squareSize = 20;
+//  while(1){
+//      //cc = (cc)%4;
+//      testCtx.strokeRect(x, 0, squareSize, squareSize);
+//      var grd = testCtx.createRadialGradient(x + squareSize/2, y + squareSize/2, squareSize/7, x + squareSize/2, y + squareSize/2, squareSize/2);
+//      grd.addColorStop(0, colors[cc][0]);
+//      grd.addColorStop(1, colors[cc][1]);
+//      testCtx.fillStyle = grd;
+//      testCtx.fillRect(x, y, squareSize, squareSize);
+//      x = squareSize*(cc%2);
+//      y = squareSize*(Math.floor(cc/2))%2;
+//      cc++;
+//      if(cc==4) 
+//          break;
+//  }
+      
+    
+  board = createBoard(boardSize, boardXoff, boardYoff);
 
   $scope.CanvasState = function(canvas, activePlayer) {
       
@@ -591,6 +595,22 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         // We return a simple javascript object (a hash) with x and y defined
         return {x: mx, y: my};
       }
+    
+    this.placePiece = function(){
+        //change id on the board
+        $scope.lastPlayedPiece = {colorId: myState.selection.colorId, squaresIds: []};
+        for(sq = 0; sq < myState.selection.squares.length; sq++){
+            i = (myState.selection.yOff - board.yOff)/squareSize + myState.selection.squares[sq][0];
+            j = (myState.selection.xOff - board.xOff)/squareSize + myState.selection.squares[sq][1];
+            board.squares[i*boardSize + j][2] = myState.selection.colorId;
+            $scope.lastPlayedPiece.squaresIds.push([i*boardSize + j]);
+        }
+        myState.selection.active = false;
+        myState.selection.available = false;
+        myState.selection = null;
+        pieces = $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].pieces;
+        pieces.splice(pieces.length-1, 1);      //delete last piece
+    }
 
     //fixes a problem where double clicking causes text to get selected on the canvas
     canvas.addEventListener('selectstart', function(e) { e.preventDefault(); return false; }, false);
@@ -686,25 +706,14 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
               if(myState.selection){
                   //test if can fit in that place
                   if(myState.selection.canBePlaced()){              
-
-                      //change id on the board
-                      for(sq = 0; sq < myState.selection.squares.length; sq++){
-                          i = (myState.selection.yOff - board.yOff)/squareSize + myState.selection.squares[sq][0];
-                          j = (myState.selection.xOff - board.xOff)/squareSize + myState.selection.squares[sq][1];
-                          board.squares[i*boardSize + j][2] = myState.selection.colorId;
-                      }
-                      myState.selection.active = false;
-                      myState.selection.available = false;
-                      myState.selection = null;
-                      pieces = $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].pieces;
-                      pieces.splice(pieces.length-1, 1);      //delete last piece
-                      $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(false);
-                      $scope.activeBagId = ($scope.activeBagId+1)% $scope.players[$scope.activePlayerId].bag.length;
-                      $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(true);
-                      $scope.players[$scope.activePlayerId].updateScore();
-                      $scope.$apply();
-                      //$scope.players[$scope.activePlayerId].rearrangePieces();        //TODO: de vazut dc aplic sau nu :)
-                      myState.valid = false;      //continue drawing cause there was a modification
+                        myState.placePiece();
+                        $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(false);
+                        $scope.activeBagId = ($scope.activeBagId+1)% $scope.players[$scope.activePlayerId].bag.length;
+                        $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(true);
+                        $scope.players[$scope.activePlayerId].updateScore();
+                        $scope.$apply();
+                        //$scope.players[$scope.activePlayerId].rearrangePieces();        //TODO: de vazut dc aplic sau nu :)
+                        myState.valid = false;      //continue drawing cause there was a modification
                   }
               }
           }
@@ -732,6 +741,17 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
             $scope.players[0].score = newVal;
         }
     });    
+  }
+  
+  
+  recreateBoard = function(boardSize, boardXoff, boardYoff, playedPieces){
+      board = createBoard(boardSize, boardXoff, boardYoff);
+      for(i = 0; playedPieces.length; i++){
+          for(j = 0; j < playedPieces[i].squaresIds.length; j++){
+              board.squares[playedPieces[i].squaresIds[j]][2] = playedPieces[i].colorId;
+          }
+      }
+      return board;
   }
 
   //for debugging
