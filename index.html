@@ -4,39 +4,33 @@
     <title>Shamblokus</title>
     <link rel="stylesheet" type="text/css" href="bower_components/materialize/dist/css/materialize.min.css">
     <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="icon" type="image/png" href="favicon.png">
 </head>
 
 <body ng-controller="Main">
     
     <div class="row top">
-        <div class="col s4" ng-show="boardReady"><div class="container">{{players[0].name}} {{players[0].score}} vs {{players[1].score}} {{players[1].name}}</div></div>
-        <div class="col s2" ng-show="boardReady"><div class="container">TIME</div></div>
-        <div class="col s4" ng-show="boardReady"><div class="container">{{players[activePlayerId].name}}'s turn</div></div>
+        <div class="col s10" ng-show="gameStarted">
+            <div class="col s4"><div class="container">{{players[0].name}} {{players[0].score}} vs {{players[1].score}} {{players[1].name}}</div></div>
+            <div class="col s2"><div class="container">TIME</div></div>
+            <div class="col s4"><div class="container">{{players[activePlayerId].name}}'s turn</div></div>
+        </div>
+        <div class="col s10 center" ng-show="waitingForStart">
+            <h5>Waiting for other players to get ready...</h5>
+        </div>
+        <div class="col s8 center" ng-show="boardReady">
+            <h5>All players are ready!</h5>
+        </div>
+        <div class="col s2 center" ng-show="boardReady">
+            <button class="btn" ng-click="startGame()">Start game!</button>
+        </div>
         <div class="col s2 right">
             <button class="btn" ng-click="login()" ng-hide="authenticated">Login</button>
             <button class="btn" ng-click="logout()" ng-show="authenticated">Logout</button>
         </div>
     </div>
-
-<!--
-    <div class="row" >        
-        <div class="col s12">
-            <canvas id="test" width="100%" height="50px">
-                Your browser does not support HTML5 Canvas!
-            </canvas>
-        </div>
-    </div>
--->
     
-    <div class="row" ng-show="boardReady">        
-        <div class="col s12 pieces">
-            <canvas id="bag1" >
-                Your browser does not support HTML5 Canvas!
-            </canvas>
-        </div>
-    </div>
-
-    <div class="row" ng-hide="authenticated || !boardReady">        
+   <!--  <div class="row" ng-hide="authenticated || !boardReady">        
         <div class="col s12 center">
             <h4>You need a board to play a game.</h4>
             <div class="input-field row s6 center">
@@ -47,7 +41,7 @@
                 <button class="btn">Join game</button>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <div class="row center" ng-show="personalizeUser">
         <form>
@@ -61,12 +55,8 @@
         </form>
     </div>
 
-    <div class="row center" ng-show="waitingForStart">
-        <h5>Waiting for other players to get ready...</h5>
-    </div>
-
     <div ng-show="authenticated">
-        <div class="row s12" ng-hide="boardReady">
+        <div class="row s12" ng-hide="gameStarted">
             <div class="col s12 valigh-wrapper">
                 <div class="col s2 valign">
                     <select ng-model="nrPlayers" id="selectplayers">
@@ -81,12 +71,9 @@
             <div class="row s12" ng-show="config">
                 <div class="row s12 mt-30" ng-repeat="(id, p) in players track by $index">
                     <div class="input-field col s12" ng-show="id > 0">
-                        <input type="text" id="link_{{id}}" value="{{appuri}}/#/{{encodedGame}}/{{id}}">
+                        <input type="text" id="link_{{id}}" value="{{appuri}}/#/{{currentGame|btoa}}/{{id}}/{{p.colors|toString}}">
                         <label for="link_{{id}}" class="active">Give this link to player {{id+1}}</label>
                     </div>
-                </div>
-                <div class="row s12 center">
-                    <button class="btn" ng-click="waitForPlayers()">Start game</button>
                 </div>
             </div>
 
@@ -103,10 +90,14 @@
         </div>
     </div>
 
-    <div>
-
+    <div class="row" ng-show="myPlayer">        
+        <div class="col s12 pieces">
+            <canvas id="bag1" >
+                Your browser does not support HTML5 Canvas!
+            </canvas>
+        </div>
     </div>
-    
+
     <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="bower_components/materialize/dist/js/materialize.min.js"></script>
     <script type="text/javascript" src="bower_components/angularjs/angular.min.js"></script>

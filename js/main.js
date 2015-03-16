@@ -25,7 +25,7 @@ var sham = angular.module('Shamblokus', ['ui', 'ui.router']);
 sham.config( function AppConfig ( $stateProvider, $urlRouterProvider ) {
   $urlRouterProvider.otherwise( '/' );
   $stateProvider.state( 'home', {
-    url: '/:game/:pid',
+    url: '/:game/:pid/:colors',
     views: {
       "main": {
         controller: 'Main'
@@ -35,7 +35,23 @@ sham.config( function AppConfig ( $stateProvider, $urlRouterProvider ) {
   });
 });
 sham.run( function run () {} );
-
+// filters
+sham.filter('toString', function() {
+  return function(arr) {
+    return arr.toString();
+  };
+});
+sham.filter('atob', function() {
+  return function(str) {
+    return unescape(decodeURIComponent(window.atob(str)));
+  };
+});
+sham.filter('btoa', function() {
+  return function(str) {
+    return window.btoa(encodeURIComponent(escape(str)));
+  };
+});
+//controller
 sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) {
   // init
   $scope.boardReady = false;
@@ -44,6 +60,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
   $scope.userProfile = {};
   $scope.selectPlayers = [{id:2, name:"2 players"}, {id:4, name:"4 players"}];
   $scope.nrPlayers = 2;
+  $scope.playersJoined = 0;
   $scope.myId = 0;
 
   // login user into the app
@@ -139,15 +156,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     })
   };
 
-  $scope.btoa = function(str) {
-    return window.btoa(encodeURIComponent(escape(str)));
-  };
-
-  $scope.atob = function(str) {
-    return unescape(decodeURIComponent(window.atob(str)));
-  };
-
-
   $scope.createGameSpace = function(uri) {
     return new Promise(function(resolve) {
       $http({
@@ -220,26 +228,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     } else {
       console.log("It appears you don't have storage space");
     }
-  };
-
-  $scope.gameUpdated = function(uri) {
-    console.log(uri);
-
-    // fetch the game state (and board) from the server
-    var g = $rdf.graph();
-    var f = $rdf.fetcher(g, TIMEOUT);
-
-    var docURI = webid.slice(0, webid.indexOf('#'));
-    var webidRes = $rdf.sym(webid);
-
-    f.nowOrWhenFetched(docURI,undefined,function(ok, body, xhr) {
-      if (!ok) {
-        console.log('Could not fetch game state: HTTP '+xhr.status);
-      } else {
-
-
-      }
-    });
   };
 
   // get relevant info for a webid
@@ -317,12 +305,8 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
   $scope.newGame = function() {
     var now = new Date().getTime();
     var g = new $rdf.graph();
-    var pl0 = $rdf.sym('#player0');
     g.add($rdf.sym(''), RDF("type"), SHAM("Shamblokus"));
-    g.add(pl0, RDF("type"), SHAM("Player"));
-    g.add(pl0, SHAM("playerId"), $rdf.lit('0'));
-    g.add(pl0, SHAM("hasJoined"), $rdf.lit('true', undefined, $rdf.sym('http://www.w3.org/2001/XMLSchema#boolean')));
-    g.add(pl0, SHAM("playerName"), $rdf.lit($scope.userProfile.name));
+    g.add($rdf.sym(''), SHAM('activePlayer'), $rdf.lit('0'));
     var s = new $rdf.Serializer(g).toN3(g);
     $http({
       method: 'PUT',
@@ -376,34 +360,47 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     $scope.activeBagId = 0;
 
     if ($scope.nrPlayers == 2) {
-      $scope.players[0] = new Player([0, 2]);
+      $scope.players[0] = new Player([]);
+      $scope.players[0].colors = [0, 2];
       $scope.players[0].name = $scope.userProfile.name;
-      $scope.players[1] = new Player([1, 3]);
+      $scope.myPlayer = new Player([0, 2]);
+      $scope.players[1] = new Player([]);
+      $scope.players[1].colors = [1, 3];
     } else {
-      $scope.players[0] = new Player([0]);
+      $scope.players[0] = new Player([]);
+      $scope.players[0].colors = [0];
       $scope.players[0].name = $scope.userProfile.name;
-      $scope.players[1] = new Player([1]);
-      $scope.players[2] = new Player([2]);
-      $scope.players[3] = new Player([3]);
+      $scope.myPlayer = new Player([0]);
+      $scope.players[1] = new Player([]);
+      $scope.players[1].colors = [1];
+      $scope.players[2] = new Player([]);
+      $scope.players[2].colors = [2];
+      $scope.players[3] = new Player([]);
+      $scope.players[3].colors = [3];
     }
-    $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(true);
+    $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
 
     var query = '';
-    for (var i=1; i<$scope.players.length; i++) {
-      query += 'INSERT DATA { <#player'+i+'> <'+RDF("type").value+'> "'+SHAM("Player").value+'" . } ;\n';
+    for (var i=0; i<$scope.players.length; i++) {
+      query += 'INSERT DATA { <#player'+i+'> <'+RDF("type").value+'> <'+SHAM("Player").value+'> . } ;\n';
       query += 'INSERT DATA { <#player'+i+'> <'+SHAM('playerId').value+'> "'+i+'" . } ;\n';
-      query += 'INSERT DATA { <#player'+i+'> <'+SHAM('hasJoined').value+'> "false"^^<http://www.w3.org/2001/XMLSchema#boolean> . }';
-      if (i <= 2) {
+      query += 'INSERT DATA { <#player'+i+'> <'+SHAM('playerColors').value+'> "'+$scope.players[i].colors.toString()+'" . } ;\n';
+      if (i == 0) {
+        query += 'INSERT DATA { <#player'+i+'> <'+SHAM('playerName').value+'> "'+$scope.userProfile.name+'" . } ;\n';
+        query += 'INSERT DATA { <#player'+i+'> <'+SHAM('playerJoined').value+'> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> . }';
+      }
+      if (i <= $scope.players.length-1) {
         query += " ;\n";
       }
     }
-    console.log(query);
 
     $scope.sendSPARQLPatch(uri, query).then(function(status) {
       if (status == 'success') {
+        $scope.board = $scope.RecreateBoard(boardSize, boardXoff, boardYoff, []);
         $scope.currentGame = uri;
-        $scope.encodedGame = $scope.btoa(uri);
         $scope.$apply();
+
+        $scope.waitForPlayers();
 
         var parser = document.createElement('a');
         parser.href = uri;
@@ -421,24 +418,102 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     });
   };
 
+
+  $scope.gameUpdated = function(gameURI) {
+    console.log("Game updated..."+gameURI);
+
+    // fetch the game state (and board) from the server
+    var g = $rdf.graph();
+    var f = $rdf.fetcher(g, TIMEOUT);
+
+    f.nowOrWhenFetched(gameURI,undefined,function(ok, body, xhr) {
+      if (!ok) {
+        console.log('Could not fetch game state: HTTP '+xhr.status);
+      } else {
+        // get activePlayerId
+        var activePlayerId = g.any($rdf.sym(gameURI), SHAM('activePlayer'));
+        if (activePlayerId) {
+          $scope.activePlayerId = activePlayerId.value;
+        }
+
+        // get all players
+        var players = g.statementsMatching(undefined, RDF("type"), SHAM("Player"));
+        if (!$scope.nrPlayers) {
+          $scope.nrPlayers = players.length;
+        }
+        if ($scope.playersJoined < $scope.nrPlayers) {
+          players.forEach(function(player){
+            var joined = g.any(player.subject, SHAM("playerJoined")).value;
+            var name = g.any(player.subject, SHAM("playerName")).value;
+            var pid = g.any(player.subject, SHAM("playerId")).value;
+            if (pid !== undefined) {
+              
+              if (!$scope.players) {
+                $scope.players = [];
+              }
+              var colors = g.any(player.subject, SHAM("playerColors")).value.split(',');
+              $scope.players[pid] == new Player([]);
+              $scope.players[pid].colors = colors;
+              $scope.players[pid].name = name;
+              if (joined == '1') {
+                $scope.playersJoined++;
+              }
+            }
+          });
+        }
+
+        // get board pieces
+        var playedPieces = [];
+        var pieces = g.statementsMatching(undefined, RDF("type"), SHAM("Piece"));
+        pieces.forEach(function(piece){
+          var id = g.any(piece.subject, SHAM("colorId")).value;
+          var sq = g.any(piece.subject, SHAM("squares")).value.split(',');
+          playedPieces.push({
+            colorId: id,
+            squaresIds: sq
+          });
+        });
+
+        //@@@TODO update score
+        if (playedPieces.length > 0) {
+          $scope.board = $scope.RecreateBoard(boardSize, boardXoff, boardYoff, playedPieces);
+        }
+        var started = g.any($rdf.sym(gameURI), SHAM("gameStarted"));
+        if ($scope.playersJoined == $scope.nrPlayers && started === undefined) {
+            $scope.boardReady = true;
+            $scope.waitingForStart = false;
+        }
+
+        if (started && started.value == '1') {
+          $scope.gameStarted = true;
+        }
+        $scope.$apply();
+      }
+    });
+  };
+
+  $scope.endTurn = function() {
+
+  }
+
   // save bags + pieces on the server for all players and init board
   $scope.waitForPlayers = function() {
     $scope.personalizeUser = false;
     $scope.waitingForStart = true;
+
+    // create board
+    $scope.initGame();
+
+    $scope.$apply();
     console.log("Waiting for other players...");
     //$scope.startGame();
   }
 
   $scope.joinGame = function () {
     var query = '';
-    var delJoined = new $rdf.st(
-      $rdf.sym('#player'+$scope.myId), 
-      SHAM("hasJoined"), 
-      $rdf.lit('false', undefined, $rdf.sym('http://www.w3.org/2001/XMLSchema#boolean'))
-    );
     var setJoined = new $rdf.st(
       $rdf.sym('#player'+$scope.myId), 
-      SHAM("hasJoined"), 
+      SHAM("playerJoined"),
       $rdf.lit('true', undefined, $rdf.sym('http://www.w3.org/2001/XMLSchema#boolean'))
     );
     var setName = new $rdf.st(
@@ -447,7 +522,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         $rdf.lit($scope.myName)
       );
 
-    query += 'DELETE DATA { ' + delJoined.toNT() + " } ;\n";
     query += 'INSERT DATA { ' + setJoined.toNT() + " } ;\n";
     query += 'INSERT DATA { ' + setName.toNT() + '}';
     $scope.sendSPARQLPatch($scope.gameURI, query).then(function(status) {
@@ -460,12 +534,12 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
   // check if we came through link (this is ugly)
   $scope.state = $state;
   $scope.$watch('state.params', function(newVal, oldVal) {
-    if (newVal.game && newVal.pid) {
+    if (newVal.game && newVal.pid && !$scope.myPlayer) {
       $scope.personalizeUser = true;
-      $scope.gameURI = $scope.atob($state.params.game);
+      $scope.gameURI = unescape(decodeURIComponent(window.atob($state.params.game)));
       $scope.myId = $state.params.pid;
       $scope.myName = '';
-      console.log($scope.gameURI, $scope.myId);
+      $scope.myPlayer = new Player($state.params.colors.split(','))
     }
   });
 
@@ -711,6 +785,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
                         $scope.activeBagId = ($scope.activeBagId+1)% $scope.players[$scope.activePlayerId].bag.length;
                         $scope.players[$scope.activePlayerId].bag[$scope.activeBagId].setAvailability(true);
                         $scope.players[$scope.activePlayerId].updateScore();
+                        $scope.activePlayerId = ($scope.activePlayerId + 1) % $scope.players.length;
                         $scope.$apply();
                         //$scope.players[$scope.activePlayerId].rearrangePieces();        //TODO: de vazut dc aplic sau nu :)
                         myState.valid = false;      //continue drawing cause there was a modification
@@ -729,22 +804,27 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
   }
 
 
+  $scope.initGame = function () {
+    $scope.canvas = new $scope.CanvasState(document.getElementById('bag1'), $scope.myPlayer);
+    $scope.canvas.valid = false;
+    $scope.myPlayer.rearrangePieces();
 
-  $scope.startGame = function () {
-    $scope.CanvasState(document.getElementById('bag1'), $scope.players[$scope.activePlayerId]);
-    $scope.players[$scope.activePlayerId].rearrangePieces();
 
+    // $scope.player0 = $scope.players[0];
+    // $scope.$watch('player0.score', function (newVal, oldVal){
+    //     if(newVal != undefined){
+    //         $scope.players[0].score = newVal;
+    //     }
+    // });   
+  }
 
-    $scope.player0 = $scope.players[0];
-    $scope.$watch('player0.score', function (newVal, oldVal){
-        if(newVal != undefined){
-            $scope.players[0].score = newVal;
-        }
-    });    
+  $scope.startGame = function() {
+    $scope.gameStarted = true;
+    $scope.boardReady = false;
   }
   
   
-  recreateBoard = function(boardSize, boardXoff, boardYoff, playedPieces){
+  $scope.RecreateBoard = function(boardSize, boardXoff, boardYoff, playedPieces) {
       board = createBoard(boardSize, boardXoff, boardYoff);
       for(i = 0; playedPieces.length; i++){
           for(j = 0; j < playedPieces[i].squaresIds.length; j++){
