@@ -54,9 +54,10 @@ sham.filter('btoa', function() {
 //controller
 sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) {
   // init
+  $scope.providedBoard = 'https://shamblokus.databox.me/Games/';
   $scope.boardReady = false;
   $scope.authenticated = false;
-  $scope.appuri = window.location.origin;
+  $scope.appuri = window.location.origin +window.location.pathname+'#/';
   $scope.userProfile = {};
   $scope.selectPlayers = [{id:2, name:"2 players"}, {id:4, name:"4 players"}];
   $scope.nrPlayers = 2;
