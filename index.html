@@ -85,7 +85,7 @@
             <div class="row s12" ng-show="config">
                 <div class="row s12 mt-30" ng-repeat="(id, p) in players track by $index">
                     <div class="input-field col s12" ng-show="id > 0">
-                        <input type="text" id="link_{{id}}" value="{{appuri}}/#/{{gameURI|btoa}}/{{id}}/{{p.colors|toString}}">
+                        <input type="text" id="link_{{id}}" value="{{appuri}}{{gameURI|btoa}}/{{id}}/{{p.colors|toString}}">
                         <label for="link_{{id}}" class="active">Give this link to player {{id+1}}</label>
                     </div>
                 </div>
