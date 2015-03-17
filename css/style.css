@@ -3,6 +3,10 @@ body {
     color: #CCCCCC;
 }
 
+.flex {
+    display: flex!important;
+}
+
 .top {
     padding: 10px !important;
     background-color: #333333;

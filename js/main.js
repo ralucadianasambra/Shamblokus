@@ -122,20 +122,20 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     $scope.userProfile = {};
     $scope.authenticated = false;
     $scope.boardReady = false;
+    $scope.gameStarted = false;
+    $scope.waitingForStart = false;
+    $scope.myPlayer = undefined;
   };
 
   $scope.connectToSocket = function() {
     var parser = document.createElement('a');
     parser.href = $scope.gameURI;
     parser.host; // => "example.com"
-    parser.port;     // => "3000"
     parser.pathname; // => "/pathname/"
 
     var wss = 'wss://'+parser.host;
-    if (parser.port.length > 0) {
-      wss += ':'+parser.port;
-    }
     wss += parser.pathname;
+    console.log("WSS URI: "+wss);
 
     var socket = new WebSocket(wss);
     socket.onopen = function(){
@@ -201,36 +201,37 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       url: shamURI,
       withCredentials: true
       }).success(function(data, status, headers) {
-        console.log("Found games space "+shamURI);
+        console.log("Found games space "+shamURI);        
         $scope.userProfile.boardsURI = shamURI;
-        var g = new $rdf.graph();
-        var f = $rdf.fetcher(g, TIMEOUT);
-        console.log("Looking for previous games...");
-        f.nowOrWhenFetched(shamURI,undefined,function(ok, body, xhr) {
-          if (!ok) {
-            console.log('Error fetching from game space: HTTP '+xhr.status);
-          } else {
-            // get list of games
-            if (!$scope.userProfile.games) {
-              $scope.userProfile.games = [];
-            }
+        $scope.saveCredentials();
+        // var g = new $rdf.graph();
+        // var f = $rdf.fetcher(g, TIMEOUT);
+        // console.log("Looking for previous games...");
+        // f.nowOrWhenFetched(shamURI,undefined,function(ok, body, xhr) {
+        //   if (!ok) {
+        //     console.log('Error fetching from game space: HTTP '+xhr.status);
+        //   } else {
+        //     // get list of games
+        //     if (!$scope.userProfile.games) {
+        //       $scope.userProfile.games = [];
+        //     }
 
-            var files = g.statementsMatching(undefined, RDF("type"), SHAM("Shamblokus"));
-            for (i in files) {
-              var game = {
-                uri: files[i].subject.value,
-                name: decodeURIComponent(files[i].subject.value),
-                date: new Date(g.any(files[i].subject, POSIX("mtime")).value * 1000)
-              };
-              $scope.userProfile.games.push(game);
-              $scope.$apply();
-            }
-            if ($scope.userProfile.games.length === 0) {
-              console.log("Cound not find any previous games :(");
-            }
-            $scope.saveCredentials();
-          }
-        });
+        //     var files = g.statementsMatching(undefined, RDF("type"), SHAM("Shamblokus"));
+        //     for (i in files) {
+        //       var game = {
+        //         uri: files[i].subject.value,
+        //         name: decodeURIComponent(files[i].subject.value),
+        //         date: new Date(g.any(files[i].subject, POSIX("mtime")).value * 1000)
+        //       };
+        //       $scope.userProfile.games.push(game);
+        //       $scope.$apply();
+        //     }
+        //     if ($scope.userProfile.games.length === 0) {
+        //       console.log("Cound not find any previous games :(");
+        //     }
+        //     $scope.saveCredentials();
+        //   }
+        // });
       }).error(function(data, status, headers) {
         if (status == 404) {
           console.log("Game space doesn't exist, creating..");
@@ -314,11 +315,14 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     }
   }
 
+  $scope.prepareGame = function() {
+    $scope.userProfile.boardsURI = $scope.providedBoard;
+  };
+
   $scope.newGame = function() {
     var now = new Date().getTime();
     var g = new $rdf.graph();
     g.add($rdf.sym(''), RDF("type"), SHAM("Shamblokus"));
-    g.add($rdf.sym(''), SHAM('activePlayer'), $rdf.lit('0'));
     var s = new $rdf.Serializer(g).toN3(g);
     $http({
       method: 'PUT',
@@ -330,14 +334,14 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       },
       data: s
     }).success(function(data, status, headers) {
-      var gameURI = $scope.userProfile.boardsURI+now;
+      var gameURI = $scope.userProfile.boardsURI+'game-'+now;
       var game = {
         uri: gameURI,
         name: gameURI,
         date: new Date()
       };
       $scope.configNewGame(gameURI);
-      $scope.userProfile.games.push(game);
+      // $scope.userProfile.games.push(game);
       $scope.saveCredentials();
     }).error(function(data, status, headers) {
       console.log('Could not create new game file: HTTP '+status);
@@ -368,7 +372,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
   $scope.configNewGame = function (uri) {
     $scope.config = true;
     $scope.players = [];
-    $scope.activePlayerId = 0;
     $scope.activeBagId = 0;
 
     if ($scope.nrPlayers == 2) {
@@ -419,7 +422,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
 
   $scope.gameUpdated = function(gameURI) {
-    console.log("Game updated..."+gameURI);
+    console.log("Received updated game state from: "+gameURI);
 
     // fetch the game state (and board) from the server
     var g = $rdf.graph();
@@ -484,6 +487,11 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         if ($scope.playersJoined == $scope.nrPlayers && started === undefined) {
             $scope.boardReady = true;
             $scope.waitingForStart = false;
+
+            // also init the board for the first player
+            if ($scope.myId === 0) {
+              $scope.initGame();
+            }
         }
 
         if (started) {
@@ -499,9 +507,10 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     $scope.personalizeUser = false;
     $scope.waitingForStart = true;
 
-    // create board
-    $scope.initGame();
-
+    // create board for other players
+    if ($scope.myId !== 0) {
+      $scope.initGame();
+    }
     // start listening for updates
     $scope.connectToSocket();
 
@@ -531,23 +540,28 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     });
   };
 
-  $scope.endTurn = function(lastPlayedPiece, lastPlayerId) {
-    // next player
-    console.log("Sent active player ID: ", $scope.activePlayerId);
-    var query = 'DELETE DATA { <'+$scope.gameURI+'> <'+SHAM("activePlayer").value+'> "'+ lastPlayerId +'" . } ;\n';
-    query += 'INSERT DATA { <'+$scope.gameURI+'> <'+SHAM("activePlayer").value+'> "'+ $scope.activePlayerId +'" . } ;\n';
-    // piece
-    var pieceID = '#'+Date.now();
-    query += 'INSERT DATA { <'+pieceID+'> <'+RDF('type').value+'> <'+SHAM("Piece").value+'> . } ;\n';
-    query += 'INSERT DATA { <'+pieceID+'> <'+SHAM('colorId').value+'> "'+lastPlayedPiece.colorId+'" . } ;\n';
-    query += 'INSERT DATA { <'+pieceID+'> <'+SHAM('squares').value+'> "'+lastPlayedPiece.squaresIds.toString()+'" . }';
+  $scope.endTurn = function(lastPlayedPiece) {
+    var lastPlayerId = $scope.activePlayerId;
+    console.log("Old turn for player: ", $scope.activePlayerId, "Len: ", $scope.players.length);
+    $scope.activePlayerId = ($scope.activePlayerId + 1) % $scope.players.length;
+    console.log("New turn for player:", $scope.activePlayerId);
 
+    var query = '';
+    // next player
+    query += 'DELETE DATA { <'+$scope.gameURI+'> <'+SHAM("activePlayer").value+'> "'+ lastPlayerId +'" . } ;\n';
+    query += 'INSERT DATA { <'+$scope.gameURI+'> <'+SHAM("activePlayer").value+'> "'+ $scope.activePlayerId +'" . }';
+      // piece
+    if (lastPlayedPiece) {
+      query += " ;\n";
+      var pieceID = '#'+Date.now();
+      query += 'INSERT DATA { <'+pieceID+'> <'+RDF('type').value+'> <'+SHAM("Piece").value+'> . } ;\n';
+      query += 'INSERT DATA { <'+pieceID+'> <'+SHAM('colorId').value+'> "'+lastPlayedPiece.colorId+'" . } ;\n';
+      query += 'INSERT DATA { <'+pieceID+'> <'+SHAM('squares').value+'> "'+lastPlayedPiece.squaresIds.toString()+'" . }';
+    }
     //@@TODO end timer
 
     $scope.sendSPARQLPatch($scope.gameURI, query);
   }
-
-
 
   // check if we came through link (this is ugly)
   $scope.state = $state;
@@ -565,29 +579,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
   });
 
 
-  ////// CANVAS CODE BEGINS HERE ///////
-
-//  var testCtx = document.getElementById('test').getContext('2d');
-//  cc = 0;
-//  x = 0;
-//  y = 0;
-//  squareSize = 20;
-//  while(1){
-//      //cc = (cc)%4;
-//      testCtx.strokeRect(x, 0, squareSize, squareSize);
-//      var grd = testCtx.createRadialGradient(x + squareSize/2, y + squareSize/2, squareSize/7, x + squareSize/2, y + squareSize/2, squareSize/2);
-//      grd.addColorStop(0, colors[cc][0]);
-//      grd.addColorStop(1, colors[cc][1]);
-//      testCtx.fillStyle = grd;
-//      testCtx.fillRect(x, y, squareSize, squareSize);
-//      x = squareSize*(cc%2);
-//      y = squareSize*(Math.floor(cc/2))%2;
-//      cc++;
-//      if(cc==4) 
-//          break;
-//  }
-      
-    
+  ////// CANVAS CODE BEGINS HERE ///////    
   board = createBoard(boardSize, boardXoff, boardYoff);
 
   $scope.CanvasState = function(canvas, activePlayer) {
@@ -802,14 +794,8 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
                         $scope.activeBagId = ($scope.activeBagId+1)% $scope.myPlayer.bag.length;
                         $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
                         $scope.updateScore();
-                        // set next player's turn
-                        var lastPlayerId = $scope.activePlayerId;
-                        console.log("Old:", $scope.activePlayerId, "Len: ", $scope.players.length);
-                        //TODO: $scope.activePlayerId = "1" in loc de = 1  !!
-                        $scope.activePlayerId = ($scope.activePlayerId + 1) % $scope.players.length;
-                        console.log("New:", $scope.activePlayerId);
                         // end turn
-                        $scope.endTurn(lastPlayedPiece, lastPlayerId);
+                        $scope.endTurn(lastPlayedPiece);
                         //$scope.myPlayer.rearrangePieces();        //TODO: de vazut dc aplic sau nu :)
                         myState.valid = false;      //continue drawing cause there was a modification
                   }
@@ -830,19 +816,12 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     $scope.canvas = new $scope.CanvasState(document.getElementById('bag1'), $scope.myPlayer);
     $scope.canvas.valid = false;
     $scope.myPlayer.rearrangePieces();
-
-
-    // $scope.player0 = $scope.players[0];
-    // $scope.$watch('player0.score', function (newVal, oldVal){
-    //     if(newVal != undefined){
-    //         $scope.players[0].score = newVal;
-    //     }
-    // });   
   }
 
   $scope.startGame = function() {
     $scope.gameStarted = true;
     $scope.boardReady = false;
+    $scope.activePlayerId = 0;
 
     // set gameStarted
     var query = 'INSERT DATA { <'+$scope.gameURI+'> <'+SHAM("gameStarted").value+'> "'+ Date.now() +'" . }';
