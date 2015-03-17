@@ -65,22 +65,24 @@
 
     <div ng-show="userProfile.boardsURI">
         <div class="row s12" ng-hide="boardReady || gameStarted">
-            <div class="row s12">
-                <div class="input-field col s2">
-                        <input type="text" id="board" ng-model="userProfile.name">
-                        <label for="board" ng-class="{active: userProfile.name.length > 0}">Type your name: </label>
+            <form>
+                <div class="row s12">
+                    <div class="input-field col s2">
+                            <input type="text" id="board" ng-model="userProfile.name">
+                            <label for="board" ng-class="{active: userProfile.name.length > 0}">Type your name: </label>
+                    </div>
                 </div>
-            </div>
-            <div class="col s12 valigh-wrapper">
-                <div class="col s2 valign">
-                    <select ng-model="nrPlayers" id="selectplayers">
-                        <option ng-repeat="players in selectPlayers" value="{{players.id}}">{{players.name}}</option>
-                    </select>
+                <div class="col s12 valigh-wrapper">
+                    <div class="col s2 valign">
+                        <select ng-model="nrPlayers" id="selectplayers">
+                            <option ng-repeat="players in selectPlayers" value="{{players.id}}">{{players.name}}</option>
+                        </select>
+                    </div>
+                    <div class="col s3 valign">
+                        <button class="btn" type="submit" ng-click="newGame()">Create a new game</button>
+                    </div>
                 </div>
-                <div class="col s3 valign">
-                    <button class="btn" ng-click="newGame()">Create a new game</button>
-                </div>
-            </div>
+            </form>
 
             <div class="row s12" ng-show="config">
                 <div class="row s12 mt-30" ng-repeat="(id, p) in players track by $index">
