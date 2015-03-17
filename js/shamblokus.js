@@ -62,17 +62,6 @@ function Player(ids){
     for(var i = 0; i < ids.length; i++){
         this.bag.push(new Bag(ids[i]));    
     }
-    this.updateScore = function(){
-        this.score = 0;
-        for(var b = 0; b < this.bag.length; b++){
-            for(var p = 0; p < this.bag[b].pieces.length; p++){
-                if(this.bag[b].pieces[p].available){
-                    this.score += this.bag[b].pieces[p].squares.length;
-                }
-            }
-        }
-    }
-    this.updateScore();
 }
 
 Bag.prototype.setAvailability = function(available){

@@ -432,7 +432,8 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         // get activePlayerId
         var activePlayerId = g.any($rdf.sym(gameURI), SHAM('activePlayer'));
         if (activePlayerId) {
-          $scope.activePlayerId = activePlayerId.value;
+            $scope.activePlayerId = parseInt(activePlayerId.value, 10);
+            console.log("Received active player ID: ", $scope.activePlayerId);
         }
 
         // get all players
@@ -446,6 +447,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
             var name = g.any(player.subject, SHAM("playerName")).value;
             var pid = g.any(player.subject, SHAM("playerId")).value;
             if (pid !== undefined) {
+              pid = parseInt(pid, 10);
               if (!$scope.players) {
                 $scope.players = [];
               }
@@ -463,7 +465,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         // get board pieces
         var playedPieces = [];
         var pieces = g.statementsMatching(undefined, RDF("type"), SHAM("Piece"));
-        console.log(pieces);
         pieces.forEach(function(piece) {
           var id = g.any(piece.subject, SHAM("colorId")).value;
           var sq = g.any(piece.subject, SHAM("squares")).value.split(',');
@@ -476,6 +477,8 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         //@@@TODO update score
         if (playedPieces.length > 0) {
           $scope.board = $scope.RecreateBoard(boardSize, boardXoff, boardYoff, playedPieces);
+          $scope.updateScore();
+          $scope.canvas.valid = false;
         }
         var started = g.any($rdf.sym(gameURI), SHAM("gameStarted"));
         if ($scope.playersJoined == $scope.nrPlayers && started === undefined) {
@@ -530,6 +533,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
   $scope.endTurn = function(lastPlayedPiece, lastPlayerId) {
     // next player
+    console.log("Sent active player ID: ", $scope.activePlayerId);
     var query = 'DELETE DATA { <'+$scope.gameURI+'> <'+SHAM("activePlayer").value+'> "'+ lastPlayerId +'" . } ;\n';
     query += 'INSERT DATA { <'+$scope.gameURI+'> <'+SHAM("activePlayer").value+'> "'+ $scope.activePlayerId +'" . } ;\n';
     // piece
@@ -554,6 +558,8 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       $scope.myId = $state.params.pid;
       $scope.myName = '';
       $scope.myPlayer = new Player($state.params.colors.split(','))
+      $scope.activeBagId = 0;
+      $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
 
     }
   });
@@ -795,13 +801,15 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
                         $scope.myPlayer.bag[$scope.activeBagId].setAvailability(false);
                         $scope.activeBagId = ($scope.activeBagId+1)% $scope.myPlayer.bag.length;
                         $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
-                        $scope.myPlayer.updateScore();
+                        $scope.updateScore();
                         // set next player's turn
                         var lastPlayerId = $scope.activePlayerId;
+                        console.log("Old:", $scope.activePlayerId, "Len: ", $scope.players.length);
+                        //TODO: $scope.activePlayerId = "1" in loc de = 1  !!
                         $scope.activePlayerId = ($scope.activePlayerId + 1) % $scope.players.length;
+                        console.log("New:", $scope.activePlayerId);
                         // end turn
                         $scope.endTurn(lastPlayedPiece, lastPlayerId);
-                        $scope.$apply();
                         //$scope.myPlayer.rearrangePieces();        //TODO: de vazut dc aplic sau nu :)
                         myState.valid = false;      //continue drawing cause there was a modification
                   }
@@ -843,7 +851,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
   
   
   $scope.RecreateBoard = function(boardSize, boardXoff, boardYoff, playedPieces) {
-    console.log(playedPieces);
     board = createBoard(boardSize, boardXoff, boardYoff);
     for(i = 0; i < playedPieces.length; i++){
         for(j = 0; j < playedPieces[i].squaresIds.length; j++){
@@ -853,6 +860,25 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     return board;
   }
 
+  $scope.updateScore = function(){
+      var cc;
+      var playerOfColorId = [];
+      for(i = 0; i < $scope.players.length; i++){
+          $scope.players[i].score = 0;
+          for(j = 0; j < $scope.players[i].colors.length; j++){
+              playerOfColorId[$scope.players[i].colors[j]] = i;
+          }
+      }
+      for(i = 0; i<$scope.board.squares.length; i++){
+          cc = $scope.board.squares[i][2];
+          if(cc == 4)
+              continue;
+          cp = playerOfColorId[cc];
+          $scope.players[cp].score++;
+      }
+      $scope.$apply();
+  }
+  
   //for debugging
   _scope = $scope;
 });
