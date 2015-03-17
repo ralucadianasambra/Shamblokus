@@ -579,6 +579,14 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     }
   });
 
+  $scope.$watch('userProfile.name', function(newVal, oldVal) {
+    if (newVal && newVal !== undefined && newVal.length > 0) {
+      $scope.noPlayerName = false;
+    } else {
+      $scope.noPlayerName = true;
+    }
+  });
+
 
   ////// CANVAS CODE BEGINS HERE ///////    
   board = createBoard(boardSize, boardXoff, boardYoff);
