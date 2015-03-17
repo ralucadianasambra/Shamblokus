@@ -2,12 +2,17 @@
 <html ng-app="Shamblokus">
 <head>
     <title>Shamblokus</title>
+    <style>
+        [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide {
+          display: none !important;
+        }
+    </style>
     <link rel="stylesheet" type="text/css" href="bower_components/materialize/dist/css/materialize.min.css">
     <link rel="stylesheet" type="text/css" href="css/style.css">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 
-<body ng-controller="Main">
+<body ng-cloak ng-controller="Main">
     
     <div class="row top">
         <div class="col s8" ng-show="gameStarted">
