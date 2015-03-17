@@ -10,38 +10,41 @@
 <body ng-controller="Main">
     
     <div class="row top">
-        <div class="col s10" ng-show="gameStarted">
+        <div class="col s8" ng-show="gameStarted">
             <div class="col s4"><div class="container">{{players[0].name}} {{players[0].score}} vs {{players[1].score}} {{players[1].name}}</div></div>
             <div class="col s2"><div class="container">TIME</div></div>
             <div class="col s4"><div class="container">{{players[activePlayerId].name}}'s turn</div></div>
         </div>
-        <div class="col s10 center" ng-show="waitingForStart">
+        <div class="col s8 center" ng-show="waitingForStart && !gameStarted">
             <h5>Waiting for other players to get ready...</h5>
         </div>
-        <div class="col s8 center" ng-show="boardReady">
+        <div class="col s6 center" ng-show="boardReady">
             <h5>All players are ready!</h5>
         </div>
         <div class="col s2 center" ng-show="boardReady">
-            <button class="btn" ng-click="startGame()">Start game!</button>
+            <button class="btn green" ng-click="startGame()">Start game!</button>
         </div>
-        <div class="col s2 right">
-            <button class="btn" ng-click="login()" ng-hide="authenticated">Login</button>
+        <div class="col s4 right">
+            <button class="btn" ng-click="endTurn()" ng-show="gameStarted">Skip turn</button>
+            <button class="btn" ng-click="login()" ng-hide="authenticated || gameStarted">Login</button>
             <button class="btn" ng-click="logout()" ng-show="authenticated">Logout</button>
         </div>
     </div>
     
-   <!--  <div class="row" ng-hide="authenticated || !boardReady">        
+    <div class="row" ng-hide="userProfile.boardsURI || gameURI">        
         <div class="col s12 center">
-            <h4>You need a board to play a game.</h4>
-            <div class="input-field row s6 center">
-                <input type="text" id="board" ng-model="currentGame">
-                <label for="board" ng-class="{active: currentGame.length > 0}">Type the URI for a game: </label>
-            </div>
-            <div class="row s12">
-                <button class="btn">Join game</button>
-            </div>
+            <form>
+                <h4>You need a board URL to play a game.</h4>
+                <div class="input-field row s6 center">
+                    <input type="text" id="board" ng-model="providedBoard">
+                    <label for="board" ng-class="{active: providedBoard.length > 0}">Type the URI for a game: </label>
+                </div>
+                <div class="row s12">
+                    <button class="btn" type="submit" ng-click="prepareGame()">Prepare new game</button>
+                </div>
+            </form>
         </div>
-    </div> -->
+    </div>
 
     <div class="row center" ng-show="personalizeUser">
         <form>
@@ -55,8 +58,14 @@
         </form>
     </div>
 
-    <div ng-show="authenticated">
+    <div ng-show="userProfile.boardsURI">
         <div class="row s12" ng-hide="boardReady || gameStarted">
+            <div class="row s12">
+                <div class="input-field col s2">
+                        <input type="text" id="board" ng-model="userProfile.name">
+                        <label for="board" ng-class="{active: userProfile.name.length > 0}">Type your name: </label>
+                </div>
+            </div>
             <div class="col s12 valigh-wrapper">
                 <div class="col s2 valign">
                     <select ng-model="nrPlayers" id="selectplayers">
@@ -77,7 +86,7 @@
                 </div>
             </div>
 
-            <div class="col s12">
+            <!-- <div class="col s12">
                 <h5>Existing games:</h5>
                 <div class="col s12" ng-hide="userProfile.games.length > 0">No previous games found</div>
                 <div class="col s12" ng-repeat="game in userProfile.games">
@@ -86,7 +95,7 @@
                         <a href="#">{{game.name}}</a> {{game.date}}
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 
