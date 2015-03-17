@@ -447,19 +447,21 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         }
         if ($scope.playersJoined < $scope.nrPlayers) {
           players.forEach(function(player){
-            var joined = g.any(player.subject, SHAM("playerJoined")).value;
-            var name = g.any(player.subject, SHAM("playerName")).value;
-            var pid = g.any(player.subject, SHAM("playerId")).value;
-            if (pid !== undefined) {
-              pid = parseInt(pid, 10);
+            var joined = g.any(player.subject, SHAM("playerJoined"));
+            var name = g.any(player.subject, SHAM("playerName"));
+            var pid = g.any(player.subject, SHAM("playerId"));
+            if (pid !== undefined && pid.value) {
+              pid = parseInt(pid.value, 10);
               if (!$scope.players) {
                 $scope.players = [];
               }
-              var colors = g.any(player.subject, SHAM("playerColors")).value.split(',');
               $scope.players[pid] = new Player([]);
-              $scope.players[pid].colors = colors;
-              $scope.players[pid].name = name;
-              if (joined == '1') {
+              var colors = g.any(player.subject, SHAM("playerColors"));
+              if (colors && colors.value) {
+                $scope.players[pid].colors = colors.value.split(',')
+              }
+              $scope.players[pid].name = (name && name.value)?name.value:'';
+              if (joined && (joined.value == '1' || joined.value == 'true')) {
                 $scope.playersJoined++;
               }
             }
