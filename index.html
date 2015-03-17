@@ -24,10 +24,7 @@
             <h5>Waiting for other players to get ready...</h5>
         </div>
         <div class="col s6 center" ng-show="boardReady">
-            <h5>All players are ready!</h5>
-        </div>
-        <div class="col s2 center" ng-show="boardReady">
-            <button class="btn green" ng-click="startGame()">Start game!</button>
+            <h5>All players are ready! <button class="btn green" ng-click="startGame()">Start game!</button></h5>
         </div>
         <div class="col s4 right">
             <button class="btn" ng-click="endTurn()" ng-show="gameStarted">Skip turn</button>
@@ -79,7 +76,7 @@
                         </select>
                     </div>
                     <div class="col s3 valign">
-                        <button class="btn" type="submit" ng-click="newGame()">Create a new game</button>
+                        <button class="btn" type="submit" ng-click="newGame()" ng-disabled="noPlayerName">Create a new game</button>
                     </div>
                 </div>
             </form>
@@ -106,7 +103,8 @@
         </div>
     </div>
 
-    <div class="row" ng-show="myPlayer">        
+    <div class="row" ng-show="myPlayer">
+        <div>Tips: R - rotate piece / H - flip horizontally / V - flip vertically / Enter - end turn</div>
         <div class="col s12 pieces">
             <canvas id="bag1" >
                 Your browser does not support HTML5 Canvas!

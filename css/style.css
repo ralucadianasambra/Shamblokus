@@ -26,11 +26,14 @@ body {
 
 .btn {
     margin-bottom: 0px !important;
-    background-color: dodgerblue !important;
+    background-color: #1E90FF!important;
+}
+.btn:hover {
+    background-color: #4FA6FA!important;
 }
 
 .btn-large{
-    background-color: dodgerblue;
+    background-color: #1E90FF;
 }
 
 .mr-20 {
