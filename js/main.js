@@ -138,15 +138,19 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     wss += parser.pathname;
     console.log("WSS URI: "+wss);
 
-    var socket = new WebSocket(wss);
-    socket.onopen = function(){
+    $scope.socket = new WebSocket(wss);
+    $scope.socket.onopen = function(){
       this.send('sub ' + $scope.gameURI);
     }
-    socket.onmessage = function(msg){
+    $scope.socket.onmessage = function(msg){
       if (msg.data && msg.data.slice(0, 3) === 'pub') {
         // resource updated
         $scope.gameUpdated(msg.data.slice(4, msg.data.length));
       }
+    }
+    $scope.socket.onclose = function() {
+      console.log("Websocket connection closed. Restarting...");
+      $scope.sconnectToSocket();
     }
   }
 
