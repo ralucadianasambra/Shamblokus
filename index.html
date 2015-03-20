@@ -16,7 +16,8 @@
     
     <div class="row top">
         <div class="col s8" ng-show="gameStarted">
-            <div class="col s6"><div class="container">{{players[0].name}} {{players[0].score}} vs {{players[1].score}} {{players[1].name}}</div></div>
+            <div class="col s6"><div class="container">{{players[0].name}} ({{players[0].score}}) vs ({{players[1].score}}) {{players[1].name}}</div></div>
+<!--            <div class="col s6"><div class="container">{{players[0].name}}: {{players[0].score}}, {{players[1].name}}: {{players[1].score}}</br>{{players[2].name}}: {{players[2].score}}, {{players[3].name}}: {{players[3].score}}</div></div>-->
             <div class="col s2"><div class="container">TIME</div></div>
             <div class="col s4"><div class="container">{{players[activePlayerId].name}}'s turn</div></div>
         </div>
@@ -106,7 +107,7 @@
     <div class="row" ng-show="myPlayer">
         <div>Tips: R - rotate piece / H - flip horizontally / V - flip vertically / Enter - end turn</div>
         <div class="col s12 pieces">
-            <canvas id="bag1" >
+            <canvas id="game">
                 Your browser does not support HTML5 Canvas!
             </canvas>
         </div>

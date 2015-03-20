@@ -1,12 +1,8 @@
-var colors = [['rgba(220, 0, 0, 0.99)', 'rgba(128, 0, 0, 0.99)', 'rgba(255, 100, 100, 0.99)'],                 //red
-              //['rgba(60, 80, 255, 0.99)', 'rgba(40, 60, 180, 0.99)', 'rgba(140, 200, 255, 0.99)'],                //blue
-              ['rgba(50, 50, 235, 0.99)', 'rgba(20, 20, 180, 0.99)', 'rgba(120, 120, 255, 0.99)'],                //blue
-              //['rgba(140, 65, 220, 0.99)', 'rgba(100, 30, 180, 0.99)', 'rgba(200, 160, 245, 0.99)'],                //blue
-              //['rgba(255, 180, 0, 0.99)', 'rgba(220, 165, 0, 0.99)', 'rgba(255, 215, 120, 0.99)'],                //blue
-              ['rgba(255, 245, 100, 0.99)', 'rgba(240, 220, 0, 0.99)', 'rgba(255, 255, 230, 0.99)'],               //yellow
-              ['rgba(0, 150, 0, 0.99)', 'rgba(0, 100, 0, 0.99)', 'rgba(80, 220, 80, 0.99)'],                 //green
-              ['rgba(200, 200, 200, 0.99)', 'rgba(220, 220, 220, 0.99)', 'rgba(200, 200, 200, 0.99)']];        //white
-              //['rgba(170, 170, 170, 0.99)', 'rgba(200, 200, 200, 0.99)', 'rgba(200, 200, 200, 0.99)']];        //white
+var colors = [['rgba(220, 0, 0, 0.99)', 'rgba(128, 0, 0, 0.99)', 'rgba(255, 100, 100, 0.99)', 'rgba(220, 0, 0, 0.7)', 'rgba(128, 0, 0, 0.7)'],                 //red
+              ['rgba(80, 100, 255, 0.99)', 'rgba(40, 60, 180, 0.99)', 'rgba(140, 200, 255, 0.99)', 'rgba(80, 100, 255, 0.7)', 'rgba(40, 60, 180, 0.7)'],
+              ['rgba(255, 245, 100, 0.99)', 'rgba(240, 220, 0, 0.99)', 'rgba(255, 255, 230, 0.99)', 'rgba(255, 245, 100, 0.7)', 'rgba(240, 220, 0, 0.7)'],               //yellow
+              ['rgba(0, 150, 0, 0.99)', 'rgba(0, 100, 0, 0.99)', 'rgba(80, 220, 80, 0.99)', 'rgba(0, 150, 0, 0.7)', 'rgba(0, 100, 0, 0.7)'],                 //green
+              ['rgba(200, 200, 200, 0.99)', 'rgba(220, 220, 220, 0.99)', 'rgba(200, 200, 200, 0.99)', 'rgba(200, 200, 200, 0.99)', 'rgba(220, 220, 220, 0.99)']];        //white
 
 function Piece(colorId, coords){
     this.colorId = colorId;
@@ -136,7 +132,7 @@ Player.prototype.rearrangePieces = function(){
             var cPiece = this.bag[b].pieces[p];
 			if(cPiece.available == false)
 				continue;		//skip
-            if(x + (cPiece.jmax) * squareSize + piecesDist > boardXoff)  //new line
+            if(x + (cPiece.jmax) * squareSize + piecesDist > boardXoff-squareSize)  //new line
             {
                 x = 0;
                 y += maxH*squareSize + piecesDist;		//use maxH of the previous line
@@ -232,7 +228,7 @@ Piece.prototype.canBePlaced = function(){
         for(var sq = 0; sq < this.squares.length; sq++){
             var i = this.squares[sq][0];
             var j= this.squares[sq][1];
-            ctx.strokeRect(this.xOff + j*squareSize, this.yOff + i*squareSize, squareSize, squareSize);
+            
             var grd = ctx.createRadialGradient(
                 this.xOff + (j+0.5)*squareSize, this.yOff + (i+0.5)*squareSize, squareSize/7, 
                 this.xOff + (j+0.5)*squareSize, this.yOff + (i+0.5)*squareSize, squareSize/2);
@@ -250,14 +246,16 @@ Piece.prototype.canBePlaced = function(){
             if(this.active){
                 grd.addColorStop(0, c3);
                 grd.addColorStop(1, c1);
+                ctx.strokeStyle = c3;
             }
             else{
                 grd.addColorStop(0, c1);
                 grd.addColorStop(1, c2);
+                ctx.strokeStyle = c1;
             }
+            ctx.strokeRect(this.xOff + j*squareSize, this.yOff + i*squareSize, squareSize-1, squareSize-1);
             ctx.fillStyle = grd;
-            ctx.fillRect(this.xOff + j*squareSize, this.yOff + i*squareSize, squareSize, squareSize);
-            //ctx.strokeRect(this.xOff + j*squareSize + 1, this.yOff + i*squareSize + 1, squareSize, squareSize);
+            ctx.fillRect(this.xOff + j*squareSize, this.yOff + i*squareSize, squareSize-1, squareSize-1);
         }
     }
     

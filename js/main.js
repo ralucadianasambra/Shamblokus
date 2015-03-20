@@ -754,8 +754,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
                 myState.selection.xOff = Math.floor(myState.selection.xOff/squareSize+0.5)*squareSize;
                 myState.selection.yOff = Math.floor(myState.selection.yOff/squareSize+0.5)*squareSize;
                 myState.valid = false;
-                //myState.selection.active = false;     //not active anymore
-                //myState.selection.available = false;
             }
         }
         myState.dragging = false;
@@ -828,7 +826,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
 
   $scope.initGame = function () {
-    $scope.canvas = new $scope.CanvasState(document.getElementById('bag1'), $scope.myPlayer);
+    $scope.canvas = new $scope.CanvasState(document.getElementById('game'), $scope.myPlayer);
     $scope.canvas.valid = false;
     $scope.myPlayer.rearrangePieces();
   }
@@ -861,6 +859,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
           $scope.players[i].score = 0;
           for(j = 0; j < $scope.players[i].colors.length; j++){
               playerOfColorId[$scope.players[i].colors[j]] = i;
+              $scope.players[i].score --;
           }
       }
       for(i = 0; i<$scope.board.squares.length; i++){
