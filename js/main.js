@@ -1,7 +1,7 @@
 // Globals
 var boardSize = 20;   //number of squares
 var squareSize = Math.floor(Math.max(15, ($(window).height())/(boardSize+5)));    //TODO
-var boardXoff = $(window).width() - squareSize * (boardSize+2);   //TODO
+var boardXoff = $(window).width() - squareSize * (boardSize+1)+5;   //TODO
 boardXoff = Math.floor(boardXoff/squareSize)*squareSize;
 var boardYoff = squareSize;
 var piecesDist = Math.floor(0.2*squareSize);
@@ -398,7 +398,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       $scope.players[3] = new Player([]);
       $scope.players[3].colors = [3];
     }
-    $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
+    //$scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
 
     var query = '';
     for (var i=0; i<$scope.players.length; i++) {
@@ -547,11 +547,16 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     });
   };
 
-  $scope.endTurn = function(lastPlayedPiece) {
+
+
+    $scope.endTurn = function(lastPlayedPiece) {
+
+    $scope.myPlayer.bag[$scope.activeBagId].setAvailability(false);
+    $scope.activeBagId = ($scope.activeBagId+1)% $scope.myPlayer.bag.length;
+    $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
+      
     var lastPlayerId = $scope.activePlayerId;
-    console.log("Old turn for player: ", $scope.activePlayerId, "Len: ", $scope.players.length);
     $scope.activePlayerId = ($scope.activePlayerId + 1) % $scope.players.length;
-    console.log("New turn for player:", $scope.activePlayerId);
 
     var query = '';
     // next player
@@ -626,7 +631,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
     this.valid = false; // when set to false, the canvas will redraw everything
     this.dragging = false; // Keep track of when we are dragging
-    // the current selected object. In the future we could turn this into an array for multiple selection
+    // the current selected object. 
     this.selection = null;
     this.dragoffx = 0; // See mousedown and mousemove events for explanation
     this.dragoffy = 0;
@@ -664,9 +669,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
               //TODO: skip if out       if (shape.x > this.width || shape.y > this.height || shape.x + shape.w < 0 || shape.y + shape.h < 0) continue;
               cPiece.draw(ctx);
             }
-          }
-          if(this.selection){
-            this.selection.draw(ctx);     //bring to front the selected piece
           }
 
           this.valid = true;
@@ -798,17 +800,17 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
                             board.squares[i*boardSize + j][2] = myState.selection.colorId;
                             lastPlayedPiece.squaresIds.push([i*boardSize + j]);
                         }
-                        myState.selection.active = false;
-                        myState.selection.available = false;
-                        myState.selection = null;
+                        //delete last piece
                         var pieces = $scope.myPlayer.bag[$scope.activeBagId].pieces;
-                        pieces.splice(pieces.length-1, 1);      //delete last piece
-                        $scope.myPlayer.bag[$scope.activeBagId].setAvailability(false);
-                        $scope.activeBagId = ($scope.activeBagId+1)% $scope.myPlayer.bag.length;
-                        $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
-                        $scope.updateScore();
+                        pieces.splice(pieces.length-1, 1);      
+                        
+
+                        myState.selection.active = false;
+                        myState.selection = null;
+
                         // end turn
                         $scope.endTurn(lastPlayedPiece);
+                        $scope.updateScore();
                         //$scope.myPlayer.rearrangePieces();        //TODO: de vazut dc aplic sau nu :)
                         myState.valid = false;      //continue drawing cause there was a modification
                   }
@@ -835,6 +837,8 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     $scope.gameStarted = true;
     $scope.boardReady = false;
     $scope.activePlayerId = 0;
+    $scope.activeBagId = 0;
+    $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
 
     // set gameStarted
     var query = 'INSERT DATA { <'+$scope.gameURI+'> <'+SHAM("gameStarted").value+'> "'+ Date.now() +'" . }';
@@ -871,6 +875,13 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       }
       $scope.$apply();
   }
+  
+  
+    $scope.skipTurn = function(){
+        $scope.myPlayer.rearrangePieces();
+        $scope.endTurn();
+        $scope.canvas.valid = false;
+    }
   
   //for debugging
   _scope = $scope;

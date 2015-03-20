@@ -64,6 +64,7 @@ Bag.prototype.setAvailability = function(available){
     this.available = available;
     for(p = 0; p < this.pieces.length; p++){
         this.pieces[p].available = available;
+        this.pieces[p].active = false;
     }
 }
 
