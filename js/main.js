@@ -661,14 +661,29 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
           // ** Add stuff you want drawn in the background all the time here **
 
+
+            
+          //mark active bag
+//          ctx.strokeStyle = 'rgba(120, 120, 120, 0.9)';
+//          ctx.lineWidth = 1;
+//          var h = Math.floor(board.h/$scope.myPlayer.bag.length+0.49) * squareSize;
+//          ctx.strokeRect(0, h*$scope.activeBagId, boardXoff - squareSize, h);
+          
           // draw all shapes
-          board.draw(ctx);  
-          for(b = 0; b < this.activePlayer.bag.length; b++){
-            for(p = 0; p < this.activePlayer.bag[b].pieces.length; p++){
-              var cPiece = this.activePlayer.bag[b].pieces[p];
+          board.draw(ctx);              
+          
+          for(b = 0; b < $scope.myPlayer.bag.length; b++){
+            for(p = 0; p < $scope.myPlayer.bag[b].pieces.length; p++){
+              var cPiece = $scope.myPlayer.bag[b].pieces[p];
               //TODO: skip if out       if (shape.x > this.width || shape.y > this.height || shape.x + shape.w < 0 || shape.y + shape.h < 0) continue;
               cPiece.draw(ctx);
             }
+//              if(!){
+//                           ctx.strokeStyle = 'rgba(120, 120, 120, 0.9)';
+//              ctx.lineWidth = 1;
+//              var h = Math.floor(board.h/$scope.myPlayer.bag.length+0.49) * squareSize;
+//              ctx.strokeRect(0, h*$scope.activeBagId, boardXoff - squareSize, h);
+//              }
           }
 
           this.valid = true;
