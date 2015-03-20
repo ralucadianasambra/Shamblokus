@@ -150,7 +150,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     }
     $scope.socket.onclose = function() {
       console.log("Websocket connection closed. Restarting...");
-      $scope.sconnectToSocket();
+      $scope.connectToSocket();
     }
   }
 
