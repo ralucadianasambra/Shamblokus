@@ -9,26 +9,35 @@
     </style>
     <link rel="stylesheet" type="text/css" href="bower_components/materialize/dist/css/materialize.min.css">
     <link rel="stylesheet" type="text/css" href="css/style.css">
-    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="images/favicon.png">
 </head>
 
 <body ng-cloak ng-controller="Main">
     
     <div class="row top">
         <div class="col s8" ng-show="gameStarted">
-            <div class="col s6"><div class="container">{{players[0].name}} ({{players[0].score}}) vs ({{players[1].score}}) {{players[1].name}}</div></div>
-<!--            <div class="col s6"><div class="container">{{players[0].name}}: {{players[0].score}}, {{players[1].name}}: {{players[1].score}}</br>{{players[2].name}}: {{players[2].score}}, {{players[3].name}}: {{players[3].score}}</div></div>-->
+            <div class="col s6"><div class="container" ng-show="playIn2">{{players[0].name}} ({{players[0].score}}) vs ({{players[1].score}}) {{players[1].name}}</div></div>
+            <div class="col s6"><div class="container" ng-show="playIn4">{{players[0].name}}: {{players[0].score}}, {{players[1].name}}: {{players[1].score}}</br>{{players[2].name}}: {{players[2].score}}, {{players[3].name}}: {{players[3].score}}</div></div>
             <div class="col s2"><div class="container">TIME</div></div>
             <div class="col s4"><div class="container">{{players[activePlayerId].name}}'s turn</div></div>
         </div>
         <div class="col s8 center" ng-show="waitingForStart && !gameStarted">
             <h5>Waiting for other players to get ready...</h5>
         </div>
-        <div class="col s6 center" ng-show="boardReady">
-            <h5>All players are ready! <button class="btn green" ng-click="startGame()">Start game!</button></h5>
+        <div class="col s8 center" ng-show="boardReady">
+            <h5>All players are ready!   <button class="btn green" ng-click="startGame()">Start game!</button></h5>
         </div>
         <div class="col s4 right">
             <button class="btn" ng-click="skipTurn()" ng-show="gameStarted && activePlayerId==myId">Skip turn</button>
+<!--
+            <div ng-show="gameStarted && activePlayerId==myId">
+                <img src="images/RotateIcon.png" style="height:30px" ng-click="rotatePiece()" title="Rotate (R)">
+                <img src="images/VflipIcon.png" style="height:30px" ng-click="flipVerticallyPiece()" title="Vertical flip (V)">  
+                <img src="images/HflipIcon.png" style="height:30px" ng-click="flipHotizontallyPiece()" title="Hotizontal flip (H)">  
+                <img src="images/Approve_icon.png" style="height:30px" ng-click="placePiece()" title="Place piece (enter)">
+                <img src="images/changePlayerIcon.png" style="height:30px" ng-click="skipTurn()" title="Skip turn (ESC)">
+            </div>
+-->
             <button class="btn" ng-click="login()" ng-hide="authenticated || gameStarted">Login</button>
             <button class="btn" ng-click="logout()" ng-show="authenticated">Logout</button>
         </div>
@@ -110,7 +119,7 @@
                 Your browser does not support HTML5 Canvas!
             </canvas>
         </div>
-        <div>Tips: R - rotate piece / H - flip horizontally / V - flip vertically / Enter - end turn</div>
+        <div>Tips: R - rotate piece / H - flip horizontally / V - flip vertically / Enter - end turn / Esc - skip turn</div>
     </div>
 
     <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>

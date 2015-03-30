@@ -386,6 +386,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       $scope.myPlayer = new Player([0, 2]);
       $scope.players[1] = new Player([]);
       $scope.players[1].colors = [1, 3];
+      $scope.playIn2 = true;
     } else {
       $scope.players[0] = new Player([]);
       $scope.players[0].colors = [0];
@@ -397,6 +398,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       $scope.players[2].colors = [2];
       $scope.players[3] = new Player([]);
       $scope.players[3].colors = [3];
+      $scope.playIn4 = true;
     }
     //$scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
 
@@ -487,6 +489,20 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         //@@@TODO update score
         if (playedPieces.length > 0) {
           $scope.board = $scope.RecreateBoard(boardSize, boardXoff, boardYoff, playedPieces);
+          var coords = [];
+          for(var i = 0; i< playedPieces[playedPieces.length-1].squaresIds.length; i++)
+          {
+              var sqId = playedPieces[playedPieces.length-1].squaresIds[i];
+              coords.push([Math.floor(sqId/boardSize), sqId - boardSize*Math.floor(sqId/boardSize)]);
+          }
+            
+          if(($scope.activePlayerId - 1 + $scope.players.length) % $scope.players.length != $scope.myId){
+              $scope.canvas.lastPlayedPiece =  new Piece(playedPieces[playedPieces.length-1].colorId, coords);
+              $scope.canvas.lastPlayedPiece.active = true;
+              $scope.canvas.lastPlayedPiece.canBeMoved = false;
+              $scope.canvas.lastPlayedPiece.xOff = board.xOff;
+              $scope.canvas.lastPlayedPiece.yOff = board.yOff;   
+          }
           $scope.updateScore();
           $scope.canvas.valid = false;
         }
@@ -651,44 +667,59 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       this.ctx.clearRect(0, 0, this.width, this.height);
     }
       
-      // While draw is called as often as the INTERVAL variable demands,
-      // It only ever does something if the canvas gets invalidated by our code
-      this.draw = function() {
+    
+    
+   
+    
+//    this.rotatePiece = function(){
+//        if(myState.selection){
+//            myState.selection.rotate();
+//            myState.valid = false;
+//        }
+//    }
+//
+//    this.flipVerticallyPiece = function(){
+//        if(myState.selection){
+//            myState.selection.flipV();
+//            myState.valid = false;
+//        }
+//    }
+//        
+//    this.flipHotizontallyPiece = function(){
+//        if(myState.selection){
+//            myState.selection.flipH();
+//            myState.valid = false;
+//        }
+//    }
+    
+    
+    // While draw is called as often as the INTERVAL variable demands,
+    // It only ever does something if the canvas gets invalidated by our code
+    this.draw = function() {
         // if our state is invalid, redraw and validate!
         if (!this.valid) {
-          var ctx = this.ctx;
-          this.clear();
-
-          // ** Add stuff you want drawn in the background all the time here **
+            var ctx = this.ctx;
+            this.clear();
 
 
-            
-          //mark active bag
-//          ctx.strokeStyle = 'rgba(120, 120, 120, 0.9)';
-//          ctx.lineWidth = 1;
-//          var h = Math.floor(board.h/$scope.myPlayer.bag.length+0.49) * squareSize;
-//          ctx.strokeRect(0, h*$scope.activeBagId, boardXoff - squareSize, h);
-          
-          // draw all shapes
-          board.draw(ctx);              
-          
-          for(b = 0; b < $scope.myPlayer.bag.length; b++){
-            for(p = 0; p < $scope.myPlayer.bag[b].pieces.length; p++){
-              var cPiece = $scope.myPlayer.bag[b].pieces[p];
-              //TODO: skip if out       if (shape.x > this.width || shape.y > this.height || shape.x + shape.w < 0 || shape.y + shape.h < 0) continue;
-              cPiece.draw(ctx);
+            // draw all shapes
+            board.draw(ctx);              
+
+            for(b = 0; b < $scope.myPlayer.bag.length; b++){
+                for(p = 0; p < $scope.myPlayer.bag[b].pieces.length; p++){
+                    var cPiece = $scope.myPlayer.bag[b].pieces[p];
+                    cPiece.draw(ctx);
+                }
             }
-//              if(!){
-//                           ctx.strokeStyle = 'rgba(120, 120, 120, 0.9)';
-//              ctx.lineWidth = 1;
-//              var h = Math.floor(board.h/$scope.myPlayer.bag.length+0.49) * squareSize;
-//              ctx.strokeRect(0, h*$scope.activeBagId, boardXoff - squareSize, h);
-//              }
-          }
+            if(myState.selection){
+                myState.selection.draw(ctx);
+            }
+            if(myState.lastPlayedPiece)
+                myState.lastPlayedPiece.draw(ctx);
 
-          this.valid = true;
+            this.valid = true;
         }
-      }
+    }
       
     // Creates an object with x and y defined, set to the mouse position relative to the state's canvas
     // If you wanna be super-correct this can be tricky, we have to worry about padding and borders
@@ -697,10 +728,10 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
         // Compute the total offset
         if (element.offsetParent !== undefined) {
-          do {
-            offsetX += element.offsetLeft;
-            offsetY += element.offsetTop;
-          } while ((element = element.offsetParent));
+            do {
+                offsetX += element.offsetLeft;
+                offsetY += element.offsetTop;
+            } while ((element = element.offsetParent));
         }
 
         // Add padding and border style widths to offset
@@ -713,13 +744,17 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
         // We return a simple javascript object (a hash) with x and y defined
         return {x: mx, y: my};
-      }
+    }
     
     //fixes a problem where double clicking causes text to get selected on the canvas
     canvas.addEventListener('selectstart', function(e) { e.preventDefault(); return false; }, false);
 
       // Up, down, and move are for dragging
     canvas.addEventListener('mousedown', function(e) {
+      if(myState.lastPlayedPiece){
+          myState.lastPlayedPiece = null;
+          myState.valid=false;
+      }
       var mouse = myState.getMouse(e);
       var mx = mouse.x;
       var my = mouse.y;
@@ -785,53 +820,17 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
       window.onkeydown = function(e) {
           var c = e.keyCode;
-          if(c === 82){		//r - rotate
-              if(myState.selection){
-                  myState.selection.rotate();
-                  myState.valid = false;
-              }
-          }
-          else if(c === 86){	//v - vertical flip
-              if(myState.selection){
-                  myState.selection.flipV();
-                  myState.valid = false;
-              }
-          }
-          else if(c === 72){	//h - horizontal flip
-              if(myState.selection){
-                  myState.selection.flipH();
-                  myState.valid = false;
-              }
-          }
-          else if(c === 13){	//enter - enter
-              if(myState.selection && $scope.activePlayerId == $scope.myId){
-                  //test if can fit in that place
-                  if(myState.selection.canBePlaced()){              
-                        //change id on the board
-                        var lastPlayedPiece = {colorId: myState.selection.colorId, squaresIds: []};
-                        for(sq = 0; sq < myState.selection.squares.length; sq++){
-                            i = (myState.selection.yOff - board.yOff)/squareSize + myState.selection.squares[sq][0];
-                            j = (myState.selection.xOff - board.xOff)/squareSize + myState.selection.squares[sq][1];
-                            board.squares[i*boardSize + j][2] = myState.selection.colorId;
-                            lastPlayedPiece.squaresIds.push([i*boardSize + j]);
-                        }
-                        //delete last piece
-                        var pieces = $scope.myPlayer.bag[$scope.activeBagId].pieces;
-                        pieces.splice(pieces.length-1, 1);      
-                        
-
-                        myState.selection.active = false;
-                        myState.selection = null;
-
-                        // end turn
-                        $scope.endTurn(lastPlayedPiece);
-                        $scope.updateScore();
-                        //$scope.myPlayer.rearrangePieces();        //TODO: de vazut dc aplic sau nu :)
-                        myState.valid = false;      //continue drawing cause there was a modification
-                  }
-              }
-          }
-
+          console.log(c);
+          if(c === 82)		//r - rotate
+              $scope.rotatePiece();
+          else if(c === 86)	//v - vertical flip
+              $scope.flipVerticallyPiece();
+          else if(c === 72)	//h - horizontal flip
+              $scope.flipHotizontallyPiece();
+          else if(c === 13)	//enter - enter
+              $scope.placePiece();
+          else if(c === 27) //esc
+              $scope.skipTurn();
       }; //end of 'onkeydown'
 
     // **** Options! ****
@@ -896,6 +895,63 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         $scope.myPlayer.rearrangePieces();
         $scope.endTurn();
         $scope.canvas.valid = false;
+        if($scope.canvas.selection){
+            $scope.canvas.selection.active = false;
+            $scope.canvas.selection=null;
+        }
+    }
+    
+    $scope.rotatePiece = function(){
+        if($scope.canvas.selection){
+            $scope.canvas.selection.rotate();
+            $scope.canvas.valid = false;
+        }
+    }
+
+    $scope.flipVerticallyPiece = function(){
+        if($scope.canvas.selection){
+            $scope.canvas.selection.flipV();
+            $scope.canvas.valid = false;
+        }
+    }
+        
+    $scope.flipHotizontallyPiece = function(){
+        if($scope.canvas.selection){
+            $scope.canvas.selection.flipH();
+            $scope.canvas.valid = false;
+        }
+    }
+    
+     $scope.placePiece = function(){
+        if($scope.canvas.selection && $scope.activePlayerId == $scope.myId){
+            
+            //test if can fit in that place
+            if($scope.canvas.selection.canBePlaced()){              
+
+                //change id on the board
+                var lastPlayedPiece = {colorId: $scope.canvas.selection.colorId, squaresIds: []};
+                for(sq = 0; sq < $scope.canvas.selection.squares.length; sq++){
+                    i = ($scope.canvas.selection.yOff - board.yOff)/squareSize + $scope.canvas.selection.squares[sq][0];
+                    j = ($scope.canvas.selection.xOff - board.xOff)/squareSize + $scope.canvas.selection.squares[sq][1];
+                    board.squares[i*boardSize + j][2] = $scope.canvas.selection.colorId;
+                    lastPlayedPiece.squaresIds.push([i*boardSize + j]);
+                }
+
+                //delete piece
+                var pieces = $scope.myPlayer.bag[$scope.activeBagId].pieces;
+                pieces.splice(pieces.length-1, 1);      
+                $scope.canvas.selection.active = false;
+                $scope.canvas.selection = null;
+
+                // end turn
+                $scope.endTurn(lastPlayedPiece);
+                $scope.updateScore();
+                $scope.canvas.valid = false;      //continue drawing cause there was a modification
+            }
+        }
+        else{
+            //TODO: message: wrong position!
+        }
     }
   
   //for debugging
