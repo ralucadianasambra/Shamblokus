@@ -1,8 +1,14 @@
-var colors = [['rgba(220, 0, 0, 0.99)', 'rgba(128, 0, 0, 0.99)', 'rgba(255, 100, 100, 0.99)', 'rgba(220, 0, 0, 0.7)', 'rgba(128, 0, 0, 0.7)'],                 //red
-              ['rgba(80, 100, 255, 0.99)', 'rgba(40, 60, 180, 0.99)', 'rgba(140, 200, 255, 0.99)', 'rgba(80, 100, 255, 0.7)', 'rgba(40, 60, 180, 0.7)'],
-              ['rgba(255, 245, 100, 0.99)', 'rgba(240, 220, 0, 0.99)', 'rgba(255, 255, 230, 0.99)', 'rgba(255, 245, 100, 0.7)', 'rgba(240, 220, 0, 0.7)'],               //yellow
-              ['rgba(0, 150, 0, 0.99)', 'rgba(0, 100, 0, 0.99)', 'rgba(80, 220, 80, 0.99)', 'rgba(0, 150, 0, 0.7)', 'rgba(0, 100, 0, 0.7)'],                 //green
+var colors = [['rgba(220, 0, 0, 0.99)', 'rgba(128, 0, 0, 0.99)', 'rgba(255, 100, 100, 0.99)', 'rgba(100, 0, 0, 0.99)', 'rgba(120, 120, 120, 0.99)'],                 //red
+              ['rgba(80, 100, 255, 0.99)', 'rgba(40, 60, 180, 0.99)', 'rgba(140, 200, 255, 0.99)', 'rgba(32, 48, 140, 0.99)', 'rgba(100, 100, 100, 0.99)'],
+              ['rgba(255, 245, 100, 0.99)', 'rgba(240, 220, 0, 0.99)', 'rgba(255, 255, 230, 0.99)', 'rgba(210, 180, 0, 0.99)', 'rgba(190, 190, 190, 0.99)'],               //yellow
+              ['rgba(0, 150, 0, 0.99)', 'rgba(0, 100, 0, 0.99)', 'rgba(80, 220, 80, 0.99)', 'rgba(0, 80, 0, 0.99)', 'rgba(15, 150, 150, 0.99)'],                 //green
               ['rgba(200, 200, 200, 0.99)', 'rgba(220, 220, 220, 0.99)', 'rgba(200, 200, 200, 0.99)', 'rgba(200, 200, 200, 0.99)', 'rgba(220, 220, 220, 0.99)']];        //white
+
+//var colors = [['rgba(220, 0, 0, 0.99)', 'rgba(128, 0, 0, 0.99)', 'rgba(255, 100, 100, 0.99)', 'rgba(220, 0, 0, 0.7)', 'rgba(128, 0, 0, 0.7)'],                 //red
+//              ['rgba(80, 100, 255, 0.99)', 'rgba(40, 60, 180, 0.99)', 'rgba(140, 200, 255, 0.99)', 'rgba(80, 100, 255, 0.7)', 'rgba(40, 60, 180, 0.7)'],
+//              ['rgba(255, 245, 100, 0.99)', 'rgba(240, 220, 0, 0.99)', 'rgba(255, 255, 230, 0.99)', 'rgba(255, 245, 100, 0.7)', 'rgba(240, 220, 0, 0.7)'],               //yellow
+//              ['rgba(0, 150, 0, 0.99)', 'rgba(0, 100, 0, 0.99)', 'rgba(80, 220, 80, 0.99)', 'rgba(0, 150, 0, 0.7)', 'rgba(0, 100, 0, 0.7)'],                 //green
+//              ['rgba(200, 200, 200, 0.99)', 'rgba(220, 220, 220, 0.99)', 'rgba(200, 200, 200, 0.99)', 'rgba(200, 200, 200, 0.99)', 'rgba(220, 220, 220, 0.99)']];        //white
 
 function Piece(colorId, coords){
     this.colorId = colorId;
@@ -12,11 +18,14 @@ function Piece(colorId, coords){
     this.yOff = 0;
 	this.available = true;       //wasn't already used 
     this.active = false;         //selected piece
+    this.standBy = true;
     this.squares = coords;
 	
     this.color1 = colors[colorId][0];
     this.color2 = colors[colorId][1];
     this.color3 = colors[colorId][2];
+    this.color4 = colors[colorId][3];
+    this.color5 = colors[colorId][4];
 
     this.setWH();
 }
@@ -60,11 +69,17 @@ function Player(ids){
     }
 }
 
+Bag.prototype.setStandBy = function(standBy){
+    for(p = 0; p < this.pieces.length; p++)
+        this.pieces[p].standBy = standBy;
+}
+
 Bag.prototype.setAvailability = function(available){
     this.available = available;
     for(p = 0; p < this.pieces.length; p++){
         this.pieces[p].available = available;
         this.pieces[p].active = false;
+        //this.pieces[p].standBy = !available;
     }
 }
 
@@ -225,7 +240,7 @@ Piece.prototype.canBePlaced = function(){
     Piece.prototype.draw = function(ctx) {
         ctx.strokeStyle = "#444444";
         //ctx.lineWidth = 0;
-        var c1, c2, c3;
+        var c1, c2, c3, c4, c5;
         for(var sq = 0; sq < this.squares.length; sq++){
             var i = this.squares[sq][0];
             var j= this.squares[sq][1];
@@ -238,16 +253,25 @@ Piece.prototype.canBePlaced = function(){
                 c1 = colors[colorId][0];
                 c2 = colors[colorId][1];
                 c3 = colors[colorId][2];
+                c4 = colors[colorId][3];
+                c5 = colors[colorId][4];
             }
             else{
                 c1 = this.color1;
                 c2 = this.color2;
                 c3 = this.color3;
+                c4 = this.color4;
+                c5 = this.color5;
             }
             if(this.active){
                 grd.addColorStop(0, c3);
                 grd.addColorStop(1, c1);
                 ctx.strokeStyle = c3;
+            }
+            else if(this.standBy && this.colorId<4){
+                grd.addColorStop(0, c4);
+                grd.addColorStop(1, c2);
+                ctx.strokeStyle = c4;
             }
             else{
                 grd.addColorStop(0, c1);

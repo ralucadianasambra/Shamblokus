@@ -400,7 +400,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       $scope.players[3].colors = [3];
       $scope.playIn4 = true;
     }
-    //$scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
 
     var query = '';
     for (var i=0; i<$scope.players.length; i++) {
@@ -496,6 +495,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
               coords.push([Math.floor(sqId/boardSize), sqId - boardSize*Math.floor(sqId/boardSize)]);
           }
             
+          //update from another player
           if(($scope.activePlayerId - 1 + $scope.players.length) % $scope.players.length != $scope.myId){
               $scope.canvas.lastPlayedPiece =  new Piece(playedPieces[playedPieces.length-1].colorId, coords);
               $scope.canvas.lastPlayedPiece.active = true;
@@ -503,6 +503,11 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
               $scope.canvas.lastPlayedPiece.xOff = board.xOff;
               $scope.canvas.lastPlayedPiece.yOff = board.yOff;   
           }
+          
+          //my turn => the bag is no longer in stand by
+          if($scope.activePlayerId == $scope.myId)
+              $scope.myPlayer.bag[$scope.activeBagId].setStandBy(false);
+
           $scope.updateScore();
           $scope.canvas.valid = false;
         }
@@ -568,6 +573,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     $scope.endTurn = function(lastPlayedPiece) {
 
     $scope.myPlayer.bag[$scope.activeBagId].setAvailability(false);
+    $scope.myPlayer.bag[$scope.activeBagId].setStandBy(true);
     $scope.activeBagId = ($scope.activeBagId+1)% $scope.myPlayer.bag.length;
     $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
       
@@ -853,6 +859,8 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     $scope.activePlayerId = 0;
     $scope.activeBagId = 0;
     $scope.myPlayer.bag[$scope.activeBagId].setAvailability(true);
+    $scope.myPlayer.bag[$scope.activeBagId].setStandBy(false);
+    $scope.canvas.valid = false;
 
     // set gameStarted
     var query = 'INSERT DATA { <'+$scope.gameURI+'> <'+SHAM("gameStarted").value+'> "'+ Date.now() +'" . }';
