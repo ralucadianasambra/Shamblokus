@@ -13,12 +13,13 @@
 </head>
 
 <body ng-cloak ng-controller="Main">
-    
     <div class="row top">
         <div class="col s8" ng-show="gameStarted">
-            <div class="col s6"><div class="container" ng-show="playIn2">{{players[0].name}} ({{players[0].score}}) vs ({{players[1].score}}) {{players[1].name}}</div></div>
-            <div class="col s6"><div class="container" ng-show="playIn4">{{players[0].name}}: {{players[0].score}}, {{players[1].name}}: {{players[1].score}}</br>{{players[2].name}}: {{players[2].score}}, {{players[3].name}}: {{players[3].score}}</div></div>
-            <div class="col s2"><div class="container">TIME</div></div>
+            <div class="col s1" ng-show="soundOn"><img src="images/soundOnWhite25.png" style="height:20" ng-click="turnOffSound()"></div>
+            <div class="col s1" ng-show="!soundOn"><img src="images/soundOffWhite25.png" style="height:20" ng-click="turnOnSound()"></div>
+            <div class="col s5"><div class="container" ng-show="playIn2">{{players[0].name}} ({{players[0].score}}) vs ({{players[1].score}}) {{players[1].name}}</div></div>
+            <div class="col s5"><div class="container" ng-show="playIn4">{{players[0].name}}: {{players[0].score}}, {{players[1].name}}: {{players[1].score}}</br>{{players[2].name}}: {{players[2].score}}, {{players[3].name}}: {{players[3].score}}</div></div>
+            <div class="col s2"><div class="container"></div></div>
             <div class="col s4"><div class="container">{{players[activePlayerId].name}}'s turn</div></div>
         </div>
         <div class="col s8 center" ng-show="waitingForStart && !gameStarted">
@@ -119,8 +120,10 @@
                 Your browser does not support HTML5 Canvas!
             </canvas>
         </div>
-        <div>Tips: R - rotate piece / H - flip horizontally / V - flip vertically / Enter - end turn / Esc - skip turn</div>
+        <div>Tips: R - rotate piece / H - flip horizontally / V - flip vertically / Enter - end turn / Esc - skip turn / A - arrange pieces</div>
     </div>
+    <div id="sound"></div>
+
 
     <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="bower_components/materialize/dist/js/materialize.min.js"></script>

@@ -386,7 +386,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       $scope.myPlayer = new Player([0, 2]);
       $scope.players[1] = new Player([]);
       $scope.players[1].colors = [1, 3];
-      $scope.playIn2 = true;
     } else {
       $scope.players[0] = new Player([]);
       $scope.players[0].colors = [0];
@@ -398,7 +397,6 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
       $scope.players[2].colors = [2];
       $scope.players[3] = new Player([]);
       $scope.players[3].colors = [3];
-      $scope.playIn4 = true;
     }
 
     var query = '';
@@ -485,8 +483,8 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
           });
         });
 
-        //@@@TODO update score
         if (playedPieces.length > 0) {
+          
           $scope.board = $scope.RecreateBoard(boardSize, boardXoff, boardYoff, playedPieces);
           var coords = [];
           for(var i = 0; i< playedPieces[playedPieces.length-1].squaresIds.length; i++)
@@ -506,7 +504,11 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
           
           //my turn => the bag is no longer in stand by
           if($scope.activePlayerId == $scope.myId)
+          {
+              if($scope.soundOn)
+                  $scope.playSound('bing');
               $scope.myPlayer.bag[$scope.activeBagId].setStandBy(false);
+          }
 
           $scope.updateScore();
           $scope.canvas.valid = false;
@@ -516,6 +518,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
             $scope.boardReady = true;
             $scope.waitingForStart = false;
 
+
             // also init the board for the first player
             if ($scope.myId === 0) {
               $scope.initGame();
@@ -524,6 +527,11 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
 
         if (started) {
           $scope.gameStarted = true;
+          if($scope.nrPlayers == 2)
+            $scope.playIn2 = true;
+          else
+            $scope.playIn4 = true;
+
         }
         $scope.$apply();
       }
@@ -818,9 +826,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     }, true); //end of 'mouseup'
 
     canvas.addEventListener('dblclick', function(e) {
-          myState.activePlayer.rearrangePieces();
-          myState.valid = false;
-          myState.dragging = false;
+          $scope.placePiece();
     }, true); //end of 'mouseup'
 
 
@@ -835,6 +841,11 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
               $scope.flipHotizontallyPiece();
           else if(c === 13)	//enter - enter
               $scope.placePiece();
+          else if(c === 65){ //a - arrange
+              myState.activePlayer.rearrangePieces();
+              myState.valid = false;
+              myState.dragging = false;
+          }
           else if(c === 27) //esc
               $scope.skipTurn();
       }; //end of 'onkeydown'
@@ -961,6 +972,19 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
             //TODO: message: wrong position!
         }
     }
+     
+    $scope.playSound = function(filename){   
+        document.getElementById("sound").innerHTML='<audio autoplay="autoplay"><source src="audio/' + filename + '.mp3" type="audio/mpeg" /><source src="' + filename + '.ogg" type="audio/ogg" /><embed hidden="true" autostart="true" loop="false" src="' + filename +'.mp3" /></audio>';
+    }
+    
+    $scope.soundOn = true;
+    $scope.turnOnSound = function(){
+        $scope.soundOn = true;
+    }
+    $scope.turnOffSound = function(){
+        $scope.soundOn = false;
+    }
+
   
   //for debugging
   _scope = $scope;
