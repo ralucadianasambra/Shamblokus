@@ -964,7 +964,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
                     message += "<h4>" + $scope.players[i].name + ", that was really close!</h4>";
                 else if($scope.players[i].score > winnerScore - 15)
                     message += "<h4>" + $scope.players[i].name + ", not bad!</h4>";
-                else if($scope.players[i].score > winnerScore - 25)
+                else
                     message += "<h4>" + $scope.players[i].name + ", you need more practice!</h4>";
             }
         }
