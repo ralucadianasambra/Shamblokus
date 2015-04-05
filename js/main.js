@@ -124,6 +124,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     $scope.authenticated = false;
     $scope.boardReady = false;
     $scope.gameStarted = false;
+    $scope.gameEnded = false;
     $scope.waitingForStart = false;
     $scope.myPlayer = undefined;
   };
@@ -477,30 +478,49 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
         pieces.forEach(function(piece) {
           var id = g.any(piece.subject, SHAM("colorId")).value;
           var sq = g.any(piece.subject, SHAM("squares")).value.split(',');
-          playedPieces.push({
-            colorId: id,
-            squaresIds: sq
-          });
+          if(sq == ""){
+              playedPieces.push({
+                colorId: id,
+                squaresIds: []
+              });
+          }
+          else{
+              playedPieces.push({
+                colorId: id,
+                squaresIds: sq
+              });
+          }
         });
 
         if (playedPieces.length > 0) {
           
           $scope.board = $scope.RecreateBoard(boardSize, boardXoff, boardYoff, playedPieces);
           var coords = [];
-          for(var i = 0; i< playedPieces[playedPieces.length-1].squaresIds.length; i++)
-          {
+          for(var i = 0; i< playedPieces[playedPieces.length-1].squaresIds.length; i++){
               var sqId = playedPieces[playedPieces.length-1].squaresIds[i];
               coords.push([Math.floor(sqId/boardSize), sqId - boardSize*Math.floor(sqId/boardSize)]);
           }
             
           //update from another player
-          if(($scope.activePlayerId - 1 + $scope.players.length) % $scope.players.length != $scope.myId){
-              $scope.canvas.lastPlayedPiece =  new Piece(playedPieces[playedPieces.length-1].colorId, coords);
-              $scope.canvas.lastPlayedPiece.active = true;
-              $scope.canvas.lastPlayedPiece.canBeMoved = false;
-              $scope.canvas.lastPlayedPiece.xOff = board.xOff;
-              $scope.canvas.lastPlayedPiece.yOff = board.yOff;   
+          if(playedPieces[playedPieces.length-1].squaresIds.length>0){
+              if(($scope.activePlayerId - 1 + $scope.players.length) % $scope.players.length != $scope.myId){
+                  $scope.canvas.lastPlayedPiece =  new Piece(playedPieces[playedPieces.length-1].colorId, coords);
+                  $scope.canvas.lastPlayedPiece.active = true;
+                  $scope.canvas.lastPlayedPiece.canBeMoved = false;
+                  $scope.canvas.lastPlayedPiece.xOff = board.xOff;
+                  $scope.canvas.lastPlayedPiece.yOff = board.yOff;   
+              }
           }
+          else{     //test if 4 consecutive skip ==> end game
+              if(playedPieces.length>=4){
+                  var i = playedPieces.length;
+                  if(playedPieces[i-4].squaresIds.length == 0 && playedPieces[i-3].squaresIds.length == 0 &&
+                     playedPieces[i-2].squaresIds.length == 0 && playedPieces[i-1].squaresIds.length == 0){
+                      $scope.endGame();
+                  }
+              }
+          }
+            
           
           //my turn => the bag is no longer in stand by
           if($scope.activePlayerId == $scope.myId)
@@ -911,13 +931,47 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
   
   
     $scope.skipTurn = function(){
-        $scope.myPlayer.rearrangePieces();
-        $scope.endTurn();
+        var lastPlayedPiece = {colorId: 4, squaresIds: []};     //send a void piece
+        $scope.endTurn(lastPlayedPiece);
         $scope.canvas.valid = false;
         if($scope.canvas.selection){
             $scope.canvas.selection.active = false;
             $scope.canvas.selection=null;
         }
+    }
+    
+    $scope.endGame = function(){
+        var winnerId = 0;
+        var winnerScore = $scope.players[0].score;
+        for(var i = 1; i < $scope.players.length; i++){
+            if($scope.players[i].score > winnerScore){
+                winnerScore = $scope.players[i].score;
+                winnerId = i;
+            }
+        }
+        //message for the winner
+        var message = "<h2>";
+        message += $scope.players[winnerId].name + " wins!";
+        message += "<img src=\"images/winnerCup.png\" style=\"height:100px; vertical-align: middle;\">";
+        message += "</h2>";
+        
+        //message for losers
+        for(i = 0; i < $scope.players.length; i++){
+            if(i != winnerId){
+                if($scope.players[i].score == winnerScore )
+                    message += "<h2>" + $scope.players[i].name + " wins too!<img src=\"images/winnerCup.png\" style=\"height:100px; vertical-align: middle;\"></h2>";
+                else if($scope.players[i].score > winnerScore - 5)
+                    message += "<h4>" + $scope.players[i].name + ", that was really close!</h4>";
+                else if($scope.players[i].score > winnerScore - 15)
+                    message += "<h4>" + $scope.players[i].name + ", not bad!</h4>";
+                else if($scope.players[i].score > winnerScore - 25)
+                    message += "<h4>" + $scope.players[i].name + ", you need more practice!</h4>";
+            }
+        }
+        message += "<br>";   
+        document.getElementById("endGameDiv").innerHTML = message;
+        $scope.gameEnded = true;
+        //TODO: different messages according to the score difference
     }
     
     $scope.rotatePiece = function(){
