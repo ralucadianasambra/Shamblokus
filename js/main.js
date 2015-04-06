@@ -658,7 +658,7 @@ sham.controller('Main', function MainCtrl ($scope, $http, $state, $stateParams) 
     this.activePlayer = activePlayer;
     this.canvas = canvas;
     this.width = canvas.width = window.innerWidth;
-    this.height = canvas.height = window.innerHeight;
+    this.height = canvas.height = Math.max(window.innerHeight, 350);
     this.ctx = canvas.getContext('2d');
 
     // This complicates things a little but fixes mouse co-ordinate problems
